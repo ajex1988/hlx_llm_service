@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
         try:
             question = request.json['question']
-
+            question += "->"
             inputs = tokenizer(question, return_tensors='pt')
             inputs = inputs.to(device)
             pred = model.generate(**inputs)

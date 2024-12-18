@@ -74,6 +74,18 @@
 <script>
     function generateRecord() {
         const dialogue = document.getElementById('dialogueInput').value;
+        // Call the service API vis POST method
+        fetch("http://127.0.0.1:3096/hlx_llm_service", {
+            method: "POST",
+            body: JSON.stringify({
+                question: "Tell me how many days in a year?"
+            }),
+            headers: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+            })
+            .then((response) => response.json())
+            .then((json) => console.log(json));
         const recordOutput = document.getElementById('recordOutput');
         // Example logic to generate medical record
         recordOutput.value = "Generated Medical Record based on the dialogue: " + dialogue;
