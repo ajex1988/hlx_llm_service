@@ -60,16 +60,14 @@
     </style>
 </head>
 <body>
-<header>Medical Record Generator</header>
+<header>哈力馨GPT病历自动生成</header>
 <main>
-    <textarea id="dialogueInput" placeholder="Enter the dialogue between doctor and patient"></textarea>
-    <textarea id="recordOutput" placeholder="The medical record template will appear here" readonly></textarea>
-    <button onclick="generateRecord()">Generate Medical Record</button>
-    <button onclick="showDownloadOptions()">Download as .docx</button>
-    <div id="downloadOptions" class="hidden">
-        <input type="text" id="fileName" placeholder="Enter file name" />
-        <button onclick="downloadDocx()">Save File</button>
-    </div>
+    <textarea id="dialogueInput" placeholder="请在此输入医生与病人对话内容"></textarea>
+    <textarea id="recordTemplate" placeholder="请在此输入病例模板"></textarea>
+    <textarea id="recordOutput" placeholder="这里会显示自动生成的病历"></textarea>
+    <button onclick="generateRecord()">自动生成病历</button>
+    <button onclick="downloadDocx()">下载病历</button>
+
 </main>
 <script>
     function generateRecord() {
@@ -83,7 +81,7 @@
             headers: {
                 "Content-type": "application/json; charset=UTF-8"
             }
-            })
+        })
             .then((response) => response.json())
             .then((json) => console.log(json));
         const recordOutput = document.getElementById('recordOutput');
@@ -91,13 +89,10 @@
         recordOutput.value = "Generated Medical Record based on the dialogue: " + dialogue;
     }
 
-    function showDownloadOptions() {
-        document.getElementById('downloadOptions').classList.remove('hidden');
-    }
 
     function downloadDocx() {
         const record = document.getElementById('recordOutput').value;
-        const fileName = document.getElementById('fileName').value || 'MedicalRecord';
+        const fileName = '病人病例';
         const blob = new Blob([record], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
