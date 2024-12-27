@@ -119,7 +119,7 @@
         // Create a mime type that will associate the new file with Microsoft Word
         const mimeType =
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-        const fileName = '病人病'+ '.docx';
+        const fileName = '病人病历'+ '.docx';
         // Create a Blob containing the Document instance and the mimeType
         docx.Packer.toBlob(doc).then(blob => {
             const docblob = blob.slice(0, blob.size, mimeType);
