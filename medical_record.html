@@ -72,23 +72,28 @@
 
 </main>
 <script>
+    let question_head = "请对以下医生与患者的对话进行分析，提取出以下关键信息：\n" +
+        "<患者姓名>，<工作单位>，<患者性别>，<患者家庭地址> ，<患者年龄>， <患者联系人电话> ，<患者民族>， <入院日期时间> ，<籍贯>， <出生地点>， <记录日期> ，<婚姻状况> ， <病史陈述者> ，<职业> ，<过敏史> ，<主诉> ，<现病史> ，<既往史>，<个人史> ，<月经史> ，<婚姻史>，<家族史> ，<四诊合参> ， <望诊> ，<闻诊> ，<问诊> ，<切诊>，<体格检查> ，<专科检查> ，<辅助检查>，<病史摘要>，<TTB_病历摘要> ，<中医诊断> ，< 西医诊断> \n" +
+        "\n" +
+        "其中对话如下：\n";
     function generateRecord() {
         const dialogue = document.getElementById('dialogueInput').value;
+        let question = question_head + dialogue
         // Call the service API vis POST method
         fetch("http://127.0.0.1:3096/hlx_llm_service", {
             method: "POST",
             body: JSON.stringify({
-                question: "Tell me how many days in a year?"
+                question: question
             }),
             headers: {
                 "Content-type": "application/json; charset=UTF-8"
             }
         })
             .then((response) => response.json())
-            .then((json) => console.log(json));
-        const recordOutput = document.getElementById('recordOutput');
-        // Example logic to generate medical record
-        recordOutput.value = "Generated Medical Record based on the dialogue: " + dialogue;
+            .then((json) => {
+                console.log(json)
+                document.getElementById('recordOutput').value = json;
+            });
     }
 
 
