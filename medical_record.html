@@ -92,7 +92,7 @@
             .then((response) => response.json())
             .then((json) => {
                 console.log(json)
-                document.getElementById('recordOutput').value = json;
+                document.getElementById('recordOutput').value = json["answer"];
             });
     }
 
