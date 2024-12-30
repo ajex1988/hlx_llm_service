@@ -65,20 +65,79 @@
 <header>哈力馨GPT病历自动生成</header>
 <main>
     <textarea id="dialogueInput" placeholder="请在此输入医生与病人对话内容"></textarea>
-    <textarea id="recordTemplate" placeholder="请在此输入病例模板"></textarea>
     <textarea id="recordOutput" placeholder="这里会显示自动生成的病历"></textarea>
+<!--    <textarea id="diagnose_west" placeholder="这里会显示西医诊断结果"></textarea>-->
+<!--    <textarea id="diagnose_chinese" placeholder="这里会显示中医诊断结果"></textarea>-->
     <button onclick="generateRecord()">自动生成病历</button>
     <button onclick="downloadDocx()">下载病历</button>
 
 </main>
 <script>
-    let question_head = "请对以下医生与患者的对话进行分析，提取出以下关键信息：\n" +
-        "<患者姓名>，<工作单位>，<患者性别>，<患者家庭地址> ，<患者年龄>， <患者联系人电话> ，<患者民族>， <入院日期时间> ，<籍贯>， <出生地点>， <记录日期> ，<婚姻状况> ， <病史陈述者> ，<职业> ，<过敏史> ，<主诉> ，<现病史> ，<既往史>，<个人史> ，<月经史> ，<婚姻史>，<家族史> ，<四诊合参> ， <望诊> ，<闻诊> ，<问诊> ，<切诊>，<体格检查> ，<专科检查> ，<辅助检查>，<病史摘要>，<TTB_病历摘要> ，<中医诊断> ，< 西医诊断> \n" +
+    let question_head = "下面有一段医患对话：\n" +
+        "----------------";
+    let question_tail = "----------------\n" +
+        "请对以上对话认真阅读并进行分析，完成以下四个任务：\n" +
+        "1. 通过对对话进行分析，提取出以下关键信息：\n" +
+        "---------------------\n" +
+        "<患者姓名>，<工作单位>，<患者性别>，<患者家庭地址> ，<患者年龄>， <患者联系人电话> ，<患者民族>， <入院日期时间> ，<籍贯>， <出生地点>， <记录日期> ，<婚姻状况> ， <病史陈述者> ，<职业> ，<过敏史> ，<主诉> ，<现病史> ，<既往史>，<个人史> ，<月经史> ，<婚姻史>，<家族史> ， <望诊> ，<闻诊> ，<问诊> ，<切诊>，<体格检查> ，<专科检查> ，<辅助检查>\n" +
+        "---------------------\n" +
         "\n" +
-        "其中对话如下：\n";
+        "2. 在提取出以上信息后，请对该患者病史进行总结，做出<病史摘要>。\n" +
+        "\n" +
+        "3. 根据对话内容的分析，请做出<中医诊断> ，< 西医诊断>。\n" +
+        "\n" +
+        "4. 根据以上提取和推理诊断的信息，按照如下病历模板模板填写病历。如果没有体格检查和专科检查，根据诊断结果，找出相应模板内容作为缺省信息：\n" +
+        "---------------------\n" +
+        "姓  名:<患者姓名>    工作单位：<工作单位>\n" +
+        "性  别:<患者性别>    住    址：<患者家庭地址>\n" +
+        "年  龄:<患者年龄>    联系方式：<患者联系人电话>\n" +
+        "民  族:<患者民族>    入院日期：<入院日期时间>\n" +
+        "籍  贯:<籍贯>       记录日期：<记录日期>\n" +
+        "婚  姻：<婚姻状况>   病史陈述者:<病史陈述者>\n" +
+        "职  业:<职业>       过敏史：<过敏史>\n" +
+        "\n" +
+        "主  诉：<主诉>\n" +
+        "现病史：<现病史>\n" +
+        "既往史：<既往史>\n" +
+        "个人史：<个人史>\n" +
+        "    月经史:<月经史>\n" +
+        "婚姻史：<婚姻史>\n" +
+        "家族史：<家族史>\n" +
+        "\n" +
+        "患者（或）家属认可本病历真实性签名：\n" +
+        "\n" +
+        "    四诊合参：\n" +
+        "        望诊：<望诊>\n" +
+        "        闻诊：<闻诊>\n" +
+        "        问诊：<问诊>\n" +
+        "        切诊：<切诊>\n" +
+        "体格检查\n" +
+        "<体格检查>\n" +
+        "\n" +
+        "\n" +
+        "专科检查：<专科检查>\n" +
+        "辅助检查：<辅助检查>\n" +
+        "病史摘要\n" +
+        "<病史摘要>\n" +
+        "\n" +
+        "\n" +
+        "  初步诊断：\n" +
+        "            中医诊断：\n" +
+        "             西医诊断：\n" +
+        "                                                      医生签名：\n" +
+        "                                                      日    期：\n" +
+        "\n" +
+        " 确定诊断：\n" +
+        "           中医诊断：\n" +
+        "            西医诊断：\n" +
+        "                                                      医生签名：\n" +
+        "                                                      日    期：\n" +
+        "\n" +
+        "---------------------\n" +
+        "最后，只需返回填写好之后的病历（任务4）即可，任务1，2，3的结果不用返回。";
     function generateRecord() {
         const dialogue = document.getElementById('dialogueInput').value;
-        let question = question_head + dialogue
+        let question = question_head + dialogue + question_tail;
         // Call the service API vis POST method
         fetch("http://127.0.0.1:3096/hlx_llm_service", {
             method: "POST",
@@ -124,7 +183,9 @@
         // Create a mime type that will associate the new file with Microsoft Word
         const mimeType =
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-        const fileName = '病人病历'+ '.docx';
+        let patient_name = record.substring(record.search("姓  名:"), record.search("工作单位：")).trim();
+        patient_name = patient_name==="" ? "病人病历" : patient_name;
+        const fileName = patient_name + '.docx';
         // Create a Blob containing the Document instance and the mimeType
         docx.Packer.toBlob(doc).then(blob => {
             const docblob = blob.slice(0, blob.size, mimeType);
