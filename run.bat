@@ -1,0 +1,1 @@
+python qa_demo.py --model_path E:\\pretrained_models\\Qwen2.5-1.5B-Instruct
