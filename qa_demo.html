@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <title>哈力馨GPT智能诊疗系统</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: row;
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    .sidebar {
+      width: 15%;
+      padding: 20px;
+      background-color: rgba(249, 249, 249, 1);
+    }
+
+    .sidebar-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .sidebar-item {
+      opacity: 0.5;
+      font-size: 18px;
+      padding: 20px;
+    }
+
+    .sidebar-item.active {
+      opacity: 1;
+      font-weight: bold;
+    }
+
+    .main-content {
+      width: 70%;
+      padding: 20px;
+      background-color: white;
+    }
+
+    .result-sidebar {
+      width: 15%;
+      padding: 20px;
+      background-color: rgba(249, 249, 249, 1);
+    }
+
+    .result-item {
+      opacity: 0.5;
+      font-size: 18px;
+    }
+
+    .result-item.main {
+      opacity: 1;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .question {
+      margin: 20px 0;
+      font-size: 28px;
+      color: black;
+    }
+
+    .input-field {
+      display: block;
+      margin: 30px auto;
+      padding: 10px;
+      width: 80%;
+      border-radius: 10px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      border: 1px solid #ccc;
+      font-size: 18px;
+    }
+
+    .next-button {
+      display: block;
+      margin: 20px auto;
+      padding: 10px 20px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      background-color: #4CAF50;
+      color: white;
+      font-size: 18px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .next-button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+
+<body>
+<div class="sidebar" id="progress-sidebar">
+  <div class="sidebar-title">哈力馨GPT智能诊疗系统</div>
+  <div id="step1" class="sidebar-item active">主诉</div>
+  <div id="step2" class="sidebar-item">现病史</div>
+  <div id="step3" class="sidebar-item">既往史</div>
+  <div id="step4" class="sidebar-item">个人史</div>
+  <div id="step5" class="sidebar-item">家族史</div>
+  <div id="step6" class="sidebar-item">体格检查</div>
+  <div id="step7" class="sidebar-item">专科检查</div>
+  <div id="step8" class="sidebar-item">辅助检查</div>
+  <div id="step9" class="sidebar-item">其他信息</div>
+  <div id="step10" class="sidebar-item">病历生成</div>
+</div>
+
+<div class="main-content" id="main-content">
+  <div id="step1-content" class="content">
+    <div class="question">请问您今天主要有什么不适？（主诉）</div>
+    <input type="text" id="chief-complaint" class="input-field" />
+    <button class="next-button" onclick="nextStep()">下一步</button>
+  </div>
+</div>
+
+<div class="result-sidebar" id="result-sidebar">
+  <div>西医诊断结果</div>
+  <div id="western-diagnosis">
+    <div class="result-item main">诊断1</div>
+    <div class="result-item">诊断2</div>
+    <div class="result-item">诊断3</div>
+  </div>
+  <div>中医诊断结果</div>
+  <div id="chinese-diagnosis">
+    <div class="result-item main">诊断1</div>
+    <div class="result-item">诊断2</div>
+    <div class="result-item">诊断3</div>
+  </div>
+</div>
+
+<script>
+  let currentStep = 1;
+  const steps = 10;
+
+  function nextStep() {
+    if (currentStep < steps) {
+      document.getElementById(`step${currentStep}`).classList.remove("active");
+      document.getElementById(`step${currentStep + 1}`).classList.add("active");
+      document.getElementById(`step${currentStep}-content`).classList.add("hidden");
+
+      currentStep++;
+      const nextContent = document.createElement('div');
+      nextContent.id = `step${currentStep}-content`;
+      nextContent.classList.add('content');
+      nextContent.innerHTML = `
+                    <div class="question">问题 ${currentStep}</div>
+                    <input type="text" id="answer${currentStep}" class="input-field" />
+                    <button class="next-button" onclick="nextStep()">下一步</button>
+                `;
+      document.getElementById('main-content').appendChild(nextContent);
+
+    } else {
+      generateReport();
+    }
+  }
+
+  function generateReport() {
+    alert('生成病历');
+  }
+</script>
+</body>
+
+</html>
