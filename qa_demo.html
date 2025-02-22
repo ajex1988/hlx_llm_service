@@ -73,6 +73,7 @@
       margin: 30px auto;
       padding: 10px;
       width: 80%;
+      height: 60px;
       border-radius: 10px;
       box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
       border: 1px solid #ccc;
@@ -116,7 +117,10 @@
 <div class="main-content" id="main-content">
   <div id="step1-content" class="content">
     <div class="question">请问您今天主要有什么不适？（主诉）</div>
-    <input type="text" id="chief-complaint" class="input-field" />
+    <label>
+    <textarea id="chief-complaint" class="input-field" >
+    </textarea>
+    </label>
     <button class="next-button" onclick="nextStep()">下一步</button>
   </div>
 </div>
@@ -139,6 +143,17 @@
 <script>
   let currentStep = 1;
   const steps = 10;
+
+  document.addEventListener("DOMContentLoaded", () => {
+    fetch('./template.json')
+            .then(response => response.json())
+            .then(data => {
+              const medical_record = data.medical_record;
+              console.log(medical_record); // Now you can use the long string in your functions
+            })
+            .catch(error => console.error('Error loading long string:', error));
+  });
+
 
   function nextStep() {
     if (currentStep < steps) {
@@ -163,7 +178,13 @@
   }
 
   function generateReport() {
-    alert('生成病历');
+
+
+    const nextContent = document.createElement('div');
+    nextContent.id = `step${currentStep}-content`;
+    nextContent.classList.add('content');
+    nextContent.innerHTML = medical_record;
+    document.getElementById('main-content').appendChild(nextContent);
   }
 </script>
 </body>
