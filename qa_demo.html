@@ -4,99 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <title>哈力馨GPT智能诊疗系统</title>
-  <style>
-    body {
-      display: flex;
-      flex-direction: row;
-      margin: 0;
-      font-family: Arial, sans-serif;
-    }
-
-    .sidebar {
-      width: 15%;
-      padding: 20px;
-      background-color: rgba(249, 249, 249, 1);
-    }
-
-    .sidebar-title {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 20px;
-    }
-
-    .sidebar-item {
-      opacity: 0.5;
-      font-size: 18px;
-      padding: 20px;
-    }
-
-    .sidebar-item.active {
-      opacity: 1;
-      font-weight: bold;
-    }
-
-    .main-content {
-      width: 70%;
-      padding: 20px;
-      background-color: white;
-    }
-
-    .result-sidebar {
-      width: 15%;
-      padding: 20px;
-      background-color: rgba(249, 249, 249, 1);
-    }
-
-    .result-item {
-      opacity: 0.5;
-      font-size: 18px;
-    }
-
-    .result-item.main {
-      opacity: 1;
-      font-size: 20px;
-      font-weight: bold;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .question {
-      margin: 20px 0;
-      font-size: 28px;
-      color: black;
-    }
-
-    .input-field {
-      display: block;
-      margin: 30px auto;
-      padding: 10px;
-      width: 80%;
-      height: 60px;
-      border-radius: 10px;
-      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-      border: 1px solid #ccc;
-      font-size: 18px;
-    }
-
-    .next-button {
-      display: block;
-      margin: 20px auto;
-      padding: 10px 20px;
-      border-radius: 10px;
-      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-      background-color: #4CAF50;
-      color: white;
-      font-size: 18px;
-      border: none;
-      cursor: pointer;
-    }
-
-    .next-button:hover {
-      background-color: #45a049;
-    }
-  </style>
+  <link rel="stylesheet" id="qa-style" href="qa.css">
+  <link rel="stylesheet" id="medical-record-style" href="medical_record.css" disabled>
 </head>
 
 <body>
@@ -143,20 +52,20 @@
 <script>
   let currentStep = 1;
   const steps = 10;
+  let medical_record = "";
 
   document.addEventListener("DOMContentLoaded", () => {
     fetch('./template.json')
             .then(response => response.json())
             .then(data => {
-              const medical_record = data.medical_record;
-              console.log(medical_record); // Now you can use the long string in your functions
+              medical_record = data.medical_record;
             })
             .catch(error => console.error('Error loading long string:', error));
   });
 
 
   function nextStep() {
-    if (currentStep < steps) {
+    if (currentStep < steps-1) {
       document.getElementById(`step${currentStep}`).classList.remove("active");
       document.getElementById(`step${currentStep + 1}`).classList.add("active");
       document.getElementById(`step${currentStep}-content`).classList.add("hidden");
@@ -171,7 +80,7 @@
                     <button class="next-button" onclick="nextStep()">下一步</button>
                 `;
       document.getElementById('main-content').appendChild(nextContent);
-
+      console.log(currentStep)
     } else {
       generateReport();
     }
@@ -179,12 +88,60 @@
 
   function generateReport() {
 
+    toggleStylesheet()
+
+    document.getElementById(`step${currentStep}`).classList.remove("active");
+    document.getElementById(`step${currentStep + 1}`).classList.add("active");
+    document.getElementById(`step${currentStep}-content`).classList.add("hidden");
 
     const nextContent = document.createElement('div');
     nextContent.id = `step${currentStep}-content`;
     nextContent.classList.add('content');
     nextContent.innerHTML = medical_record;
     document.getElementById('main-content').appendChild(nextContent);
+  }
+
+  function toggleStylesheet() {
+    const defaultStyle = document.getElementById('qa-style');
+    const alternateStyle = document.getElementById('medical-record-style');
+
+    if (defaultStyle.disabled) {
+      defaultStyle.disabled = false;
+      alternateStyle.disabled = true;
+    } else {
+      defaultStyle.disabled = true;
+      alternateStyle.disabled = false;
+    }
+  }
+
+  function downloadDocx() {
+    const record = document.getElementById('recordOutput').value;
+    const doc = new docx.Document({
+      sections: [
+        {
+          children: [
+            new docx.Paragraph({
+              children: [
+                new docx.TextRun(record),
+              ],
+            }),
+          ],
+        },
+      ],
+    });
+
+    // Create a mime type that will associate the new file with Microsoft Word
+    const mimeType =
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    let patient_name = record.substring(record.search("姓  名:"), record.search("工作单位：")).trim();
+    patient_name = patient_name==="" ? "病人病历" : patient_name;
+    const fileName = patient_name + '.docx';
+    // Create a Blob containing the Document instance and the mimeType
+    docx.Packer.toBlob(doc).then(blob => {
+      const docblob = blob.slice(0, blob.size, mimeType);
+      // Save the file using saveAs from the file-saver package
+      saveAs(docblob, fileName);
+    });
   }
 </script>
 </body>
