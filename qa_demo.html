@@ -2,6 +2,8 @@
 <html lang="zh-CN">
 
 <head>
+  <script src="https://cdn.jsdelivr.net/npm/docx@9.1.0/build/index.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.js"></script>
   <meta charset="UTF-8">
   <title>哈力馨GPT智能诊疗系统</title>
   <link rel="stylesheet" id="qa-style" href="qa.css">
@@ -80,7 +82,6 @@
                     <button class="next-button" onclick="nextStep()">下一步</button>
                 `;
       document.getElementById('main-content').appendChild(nextContent);
-      console.log(currentStep)
     } else {
       generateReport();
     }
@@ -98,7 +99,14 @@
     nextContent.id = `step${currentStep}-content`;
     nextContent.classList.add('content');
     nextContent.innerHTML = medical_record;
+
+    //Download button
+    const downloadBtn = document.createElement('button');
+    downloadBtn.textContent = "下载病历";
+    downloadBtn.onclick = downloadDocx;
+    nextContent.appendChild(downloadBtn);
     document.getElementById('main-content').appendChild(nextContent);
+
   }
 
   function toggleStylesheet() {
@@ -115,27 +123,80 @@
   }
 
   function downloadDocx() {
-    const record = document.getElementById('recordOutput').value;
-    const doc = new docx.Document({
-      sections: [
-        {
-          children: [
-            new docx.Paragraph({
-              children: [
-                new docx.TextRun(record),
-              ],
-            }),
-          ],
-        },
-      ],
+    // Get the medical record info
+    let patient_name = document.getElementById("patient_name").value;
+    let department = document.getElementById("department").value;
+    let sex = document.getElementById("sex").value;
+    let address = document.getElementById("address").value;
+    let age = document.getElementById("age").value;
+    let contact = document.getElementById("contact").value;
+    let ethnicity = document.getElementById("ethnicity").value;
+    let admission_date = document.getElementById("admission_date").value;
+    let place_of_origin = document.getElementById("place_of_origin").value;
+    let recording_date = document.getElementById("recording_date").value;
+    let marital_status = document.getElementById("marital_status").value;
+    let source_of_history = document.getElementById("source_of_history").value;
+    let occupation = document.getElementById("occupation").value;
+    let allegies = document.getElementById("allergies").value;
+
+    let chief_complaint = document.getElementById("chief_complaint").value;
+    let hpi = document.getElementById("hpi").value;
+    let pmh = document.getElementById("pmh").value;
+    let personal_history = document.getElementById("personal_history").value;
+    let menstrual_history = document.getElementById("menstrual_history").value;
+    let marital_history = document.getElementById("marital_history").value;
+    let family_history = document.getElementById("family_history").value;
+    let inspection = document.getElementById("inspection").value;
+    let auscultation = document.getElementById("auscultation").value;
+    let interview = document.getElementById("interview").value;
+    let palpation = document.getElementById("palpation").value;
+
+    let physical_exam = document.getElementById("physical_exam").value;
+    let specialist_exam = document.getElementById("specialist_exam").value;
+    let auxiliary_exam = document.getElementById("auxiliary_exam").value;
+    let medical_history_summary = document.getElementById("medical_history_summary").value;
+    let preliminary_tcm_diagnosis = document.getElementById("preliminary_tcm_diagnosis").value;
+    let preliminary_west_diagnosis = document.getElementById("preliminary_west_diagnosis").value;
+
+    let doc = new docx.Document({
+      sections: [],
     });
+
+    const paragraphs = [
+      new docx.Paragraph({
+        children: [
+          new docx.TextRun({ text: `姓  名: ${patient_name}`, bold: true }),
+          new docx.TextRun({ text: `    工作单位: ${department}` }),
+        ]
+      }),
+      new docx.Paragraph({
+        children: [
+          new docx.TextRun({ text: `姓  名: ${patient_name}`, bold: true }),
+          new docx.TextRun({ text: `    工作单位: ${department}` }),
+        ]
+      }),
+      new docx.Paragraph({
+        children: [
+          new docx.TextRun({ text: `姓  名: ${patient_name}`, bold: true }),
+          new docx.TextRun({ text: `    工作单位: ${department}` }),
+        ]
+      }),
+      new docx.Paragraph({
+        children: [
+            new docx.TextRun({ text:  `性  别: ${sex}`, bold: true }),
+          new docx.TextRun({ text: `    住    址: ${address}` }),
+        ]
+      }),
+      // Add more paragraphs with replaced values here
+    ];
+    paragraphs.forEach(paragraph => doc.addSection({ children: [paragraph] }));
 
     // Create a mime type that will associate the new file with Microsoft Word
     const mimeType =
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-    let patient_name = record.substring(record.search("姓  名:"), record.search("工作单位：")).trim();
-    patient_name = patient_name==="" ? "病人病历" : patient_name;
-    const fileName = patient_name + '.docx';
+
+    let doc_name = patient_name==="" ? "病人病历" : patient_name;
+    const fileName = doc_name + '.docx';
     // Create a Blob containing the Document instance and the mimeType
     docx.Packer.toBlob(doc).then(blob => {
       const docblob = blob.slice(0, blob.size, mimeType);
