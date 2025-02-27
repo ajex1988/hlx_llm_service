@@ -165,28 +165,35 @@
     const paragraphs = [
       new docx.Paragraph({
         children: [
-          new docx.TextRun({ text: `姓  名: ${patient_name}`, bold: true }),
-          new docx.TextRun({ text: `    工作单位: ${department}` }),
+          new docx.TextRun({ text: `姓  名: ${patient_name}`}),
+          new docx.TextRun({ text: `    工作单位: ${department}\n` }),
+          new docx.TextRun({ text:  `性  别: ${sex}` }),
+          new docx.TextRun({ text: `    住    址: ${address}\n` }),
+          new docx.TextRun({ text: `年  龄: ${age}`}),
+          new docx.TextRun({ text: `    联系方式: ${contact}\n` }),
+          new docx.TextRun({ text: `民  族: ${ethnicity}`}),
+          new docx.TextRun({ text: `    入院日期: ${admission_date}\n` }),
+          new docx.TextRun({ text: `籍  贯: ${place_of_origin}`}),
+          new docx.TextRun({ text: `    记录日期: ${recording_date}\n` }),
+          new docx.TextRun({ text: `婚姻状况: ${marital_status}`}),
+          new docx.TextRun({ text: `    病史陈述者: ${source_of_history}\n` }),
+          new docx.TextRun({ text: `职业: ${occupation}`}),
+          new docx.TextRun({ text: `    过敏史: ${allegies}\n\n` }),
+          new docx.TextRun({ text: `主  诉: ${chief_complaint}\n`}),
+          new docx.TextRun({ text: `现病史：: ${hpi}\n`}),
+          new docx.TextRun({ text: `既往史: ${pmh}\n`}),
+          new docx.TextRun({ text: `个人史: ${personal_history}\n`}),
+          new docx.TextRun({ text: `月经史: ${menstrual_history}\n`}),
+          new docx.TextRun({ text: `婚姻史：: ${marital_history}\n`}),
+          new docx.TextRun({ text: `家族史: ${family_history}\n\n`}),
+          new docx.TextRun({ text: `患者（或）家属认可本病历真实性签名: \n\n`}),
+          new docx.TextRun({ text: `四诊合参: \n`}),
+          new docx.TextRun({ text: `    望诊: ${inspection}\n`}),
+          new docx.TextRun({ text: `主  诉: ${chief_complaint}\n`}),
+          new docx.TextRun({ text: `主  诉: ${chief_complaint}\n`}),
+          new docx.TextRun({ text: `主  诉: ${chief_complaint}\n`}),
         ]
-      }),
-      new docx.Paragraph({
-        children: [
-          new docx.TextRun({ text: `姓  名: ${patient_name}`, bold: true }),
-          new docx.TextRun({ text: `    工作单位: ${department}` }),
-        ]
-      }),
-      new docx.Paragraph({
-        children: [
-          new docx.TextRun({ text: `姓  名: ${patient_name}`, bold: true }),
-          new docx.TextRun({ text: `    工作单位: ${department}` }),
-        ]
-      }),
-      new docx.Paragraph({
-        children: [
-            new docx.TextRun({ text:  `性  别: ${sex}`, bold: true }),
-          new docx.TextRun({ text: `    住    址: ${address}` }),
-        ]
-      }),
+      })
       // Add more paragraphs with replaced values here
     ];
     paragraphs.forEach(paragraph => doc.addSection({ children: [paragraph] }));
