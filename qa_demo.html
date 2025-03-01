@@ -39,28 +39,30 @@
 <div class="result-sidebar" id="result-sidebar">
   <div>西医诊断结果</div>
   <div id="western-diagnosis">
-    <div class="result-item main">诊断1</div>
-    <div class="result-item">诊断2</div>
-    <div class="result-item">诊断3</div>
+    <div id="west_diagnosis" class="result-item main">诊断1</div>
   </div>
   <div>中医诊断结果</div>
   <div id="chinese-diagnosis">
-    <div class="result-item main">诊断1</div>
-    <div class="result-item">诊断2</div>
-    <div class="result-item">诊断3</div>
+    <div id="chinese_diagnosis" class="result-item main">诊断1</div>
   </div>
 </div>
 
 <script>
   let currentStep = 1;
   const steps = 10;
-  let medical_record = "";
+  let medical_record = "";  // Medical record template
+  let q_west_diagnosis_by_chief_complaint = "";
+  let q_chinese_diagnosis_by_chief_complaint = "";
+  let q_get_hpi_q_by_chief_complaint = "";
 
   document.addEventListener("DOMContentLoaded", () => {
     fetch('./template.json')
             .then(response => response.json())
             .then(data => {
               medical_record = data.medical_record;
+              q_west_diagnosis_by_chief_complaint = data.q_west_diagnosis_by_chief_complaint;
+              q_chinese_diagnosis_by_chief_complaint = data.q_chinese_diagnosis_by_chief_complaint;
+              q_get_hpi_q_by_chief_complaint = data.q_get_hpi_q_by_chief_complaint;
             })
             .catch(error => console.error('Error loading long string:', error));
   });
@@ -72,19 +74,84 @@
       document.getElementById(`step${currentStep + 1}`).classList.add("active");
       document.getElementById(`step${currentStep}-content`).classList.add("hidden");
 
+      updatedInfo = updatedInfo(currentStep);
+
       currentStep++;
       const nextContent = document.createElement('div');
       nextContent.id = `step${currentStep}-content`;
       nextContent.classList.add('content');
       nextContent.innerHTML = `
-                    <div class="question">问题 ${currentStep}</div>
+                    <div class="question">${updatedInfo["next_q"]}</div>
                     <input type="text" id="answer${currentStep}" class="input-field" />
                     <button class="next-button" onclick="nextStep()">下一步</button>
                 `;
       document.getElementById('main-content').appendChild(nextContent);
+
+      // Update right-column
+      document.getElementById("west_diagnosis").value = updatedInfo["west_diagnosis_guess"];
+      document.getElementById("chinese_diagnosis").value = updatedInfo["chinese_diagnosis_guess"];
     } else {
       generateReport();
     }
+  }
+
+  function updateInfo(cur_step) {
+    userData = {};
+    // hard code the logic, for demo only
+    if (cur_step === 1) {
+      let chief_complaint = document.getElementById("chief-complaint").value;
+      userData["chief_complaint"] = chief_complaint;
+      let question = replaceTemplatePlaceholders(q_west_diagnosis_by_chief_complaint, userData);
+      let answer = askLLM(question);
+      let west_diagnosis_guess = answer;
+
+      question = replaceTemplatePlaceholders(q_chinese_diagnosis_by_chief_complaint, userData);
+      answer = askLLM(question);
+      let chinese_diagnosis_guess = answer;
+
+      question = replaceTemplatePlaceholders(q_get_hpi_q_by_chief_complaint, userData);
+      answer = askLLM(question);
+      let next_q = answer;
+      return {"west_diagnosis_guess": west_diagnosis_guess,
+      "chinese_diagnosis_guess": chinese_diagnosis_guess,
+      "next_q": next_q}
+    }
+    else if (cur_step === 2) {
+
+    }
+  }
+
+  function askLLM(question) {
+    let answer = "";
+    // Call the service API vis POST method
+    fetch("http://127.0.0.1:3096/hlx_llm_service", {
+      method: "POST",
+      body: JSON.stringify({
+        question: question
+      }),
+      headers: {
+        "Content-type": "application/json; charset=UTF-8"
+      }
+    })
+            .then((response) => response.json())
+            .then((json) => {
+              answer = json["answer"];
+              console.log(json)
+              document.getElementById('recordOutput').value = json["answer"];
+            });
+    return answer;
+  }
+
+  function replaceTemplatePlaceholders(template, userData) {
+    let message = template;
+
+    // Replace placeholders using user-provided data
+    for (const key in userData) {
+      const placeholder = `{${key}}`;
+      message = message.replace(placeholder, userData[key]);
+    }
+
+    return message;
   }
 
   function generateReport() {
