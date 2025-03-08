@@ -87,12 +87,10 @@
   }
 
   function updateInfo(cur_step) {
+    let question = "";
     // hard code the logic, for demo only
     if (cur_step === 1) {
-      let chief_complaint = document.getElementById("chief-complaint").value;
-      userData["chief_complaint"] = chief_complaint;
-
-      let question = "";
+      userData["chief_complaint"] = document.getElementById("chief-complaint").value;
 
       question = replaceTemplatePlaceholders(template["q_get_hpi_q_by_chief_complaint"], userData);
       askLLM(question, `step_${cur_step+1}_question`);
@@ -104,7 +102,16 @@
       askLLM(question, "chinese_diagnosis");
     }
     else if (cur_step === 2) {
-      let hpi = "";
+      userData["hpi"] = document.getElementById(`answer${cur_step}`).value;
+
+      question = replaceTemplatePlaceholders(template["q_get_pmh_q_by_chief_complaint"], userData);
+      askLLM(question, `step_${cur_step+1}_question`);
+
+      question = replaceTemplatePlaceholders(template["q_update_west_diagnosis_by_hpi"], userData);
+      askLLM(question, "west_diagnosis");
+
+      question = replaceTemplatePlaceholders(template["q_update_chinese_diagnosis_by_hpi"], userData);
+      askLLM(question, "chinese_diagnosis");
     }
   }
 
@@ -120,7 +127,7 @@
         })
             .then((response) => response.json())
             .then((json) => {
-                console.log(json);
+                console.log(`Q: ${question}\n A:${json["answer"]}`); // Debug only
                 document.getElementById(id).innerText = json["answer"];
             });
   }
