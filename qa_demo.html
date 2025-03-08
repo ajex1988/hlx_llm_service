@@ -50,19 +50,14 @@
 <script>
   let currentStep = 1;
   const steps = 10;
-  let medical_record = "";  // Medical record template
-  let q_west_diagnosis_by_chief_complaint = "";
-  let q_chinese_diagnosis_by_chief_complaint = "";
-  let q_get_hpi_q_by_chief_complaint = "";
+  let template = {};
+  let userData = {};
 
   document.addEventListener("DOMContentLoaded", () => {
     fetch('./template.json')
             .then(response => response.json())
             .then(data => {
-              medical_record = data.medical_record;
-              q_west_diagnosis_by_chief_complaint = data.q_west_diagnosis_by_chief_complaint;
-              q_chinese_diagnosis_by_chief_complaint = data.q_chinese_diagnosis_by_chief_complaint;
-              q_get_hpi_q_by_chief_complaint = data.q_get_hpi_q_by_chief_complaint;
+              template = data;
             })
             .catch(error => console.error('Error loading long string:', error));
   });
@@ -74,7 +69,7 @@
       document.getElementById(`step${currentStep + 1}`).classList.add("active");
       document.getElementById(`step${currentStep}-content`).classList.add("hidden");
 
-      updatedInfo = updateInfo(currentStep);
+      updateInfo(currentStep);
 
       currentStep++;
       const nextContent = document.createElement('div');
@@ -92,28 +87,24 @@
   }
 
   function updateInfo(cur_step) {
-    userData = {};
     // hard code the logic, for demo only
     if (cur_step === 1) {
       let chief_complaint = document.getElementById("chief-complaint").value;
       userData["chief_complaint"] = chief_complaint;
-      let question = replaceTemplatePlaceholders(q_west_diagnosis_by_chief_complaint, userData);
-      let answer = askLLM(question, "west_diagnosis");
-      let west_diagnosis_guess = answer;
 
-      question = replaceTemplatePlaceholders(q_chinese_diagnosis_by_chief_complaint, userData);
-      answer = askLLM(question, "chinese_diagnosis");
-      let chinese_diagnosis_guess = answer;
+      let question = "";
 
-      question = replaceTemplatePlaceholders(q_get_hpi_q_by_chief_complaint, userData);
-      answer = askLLM(question, `step_${cur_step+1}_question`);
-      let next_q = answer;
-      return {"west_diagnosis_guess": west_diagnosis_guess,
-      "chinese_diagnosis_guess": chinese_diagnosis_guess,
-      "next_q": next_q}
+      question = replaceTemplatePlaceholders(template["q_get_hpi_q_by_chief_complaint"], userData);
+      askLLM(question, `step_${cur_step+1}_question`);
+
+      question = replaceTemplatePlaceholders(template["q_west_diagnosis_by_chief_complaint"], userData);
+      askLLM(question, "west_diagnosis");
+
+      question = replaceTemplatePlaceholders(template["q_chinese_diagnosis_by_chief_complaint"], userData);
+      askLLM(question, "chinese_diagnosis");
     }
     else if (cur_step === 2) {
-
+      let hpi = "";
     }
   }
 
@@ -134,8 +125,8 @@
             });
   }
 
-  function replaceTemplatePlaceholders(template, userData) {
-    let message = template;
+  function replaceTemplatePlaceholders(t, userData) {
+    let message = t;
 
     // Replace placeholders using user-provided data
     for (const key in userData) {
@@ -157,7 +148,7 @@
     const nextContent = document.createElement('div');
     nextContent.id = `step${currentStep}-content`;
     nextContent.classList.add('content');
-    nextContent.innerHTML = medical_record;
+    nextContent.innerHTML = template["medical_record"];
 
     //Download button
     const downloadBtn = document.createElement('button');
