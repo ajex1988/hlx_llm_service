@@ -74,22 +74,18 @@
       document.getElementById(`step${currentStep + 1}`).classList.add("active");
       document.getElementById(`step${currentStep}-content`).classList.add("hidden");
 
-      updatedInfo = updatedInfo(currentStep);
+      updatedInfo = updateInfo(currentStep);
 
       currentStep++;
       const nextContent = document.createElement('div');
       nextContent.id = `step${currentStep}-content`;
       nextContent.classList.add('content');
       nextContent.innerHTML = `
-                    <div class="question">${updatedInfo["next_q"]}</div>
+                    <div id="step_${currentStep}_question" class="question"></div>
                     <input type="text" id="answer${currentStep}" class="input-field" />
                     <button class="next-button" onclick="nextStep()">下一步</button>
                 `;
       document.getElementById('main-content').appendChild(nextContent);
-
-      // Update right-column
-      document.getElementById("west_diagnosis").value = updatedInfo["west_diagnosis_guess"];
-      document.getElementById("chinese_diagnosis").value = updatedInfo["chinese_diagnosis_guess"];
     } else {
       generateReport();
     }
@@ -102,15 +98,15 @@
       let chief_complaint = document.getElementById("chief-complaint").value;
       userData["chief_complaint"] = chief_complaint;
       let question = replaceTemplatePlaceholders(q_west_diagnosis_by_chief_complaint, userData);
-      let answer = askLLM(question);
+      let answer = askLLM(question, "west_diagnosis");
       let west_diagnosis_guess = answer;
 
       question = replaceTemplatePlaceholders(q_chinese_diagnosis_by_chief_complaint, userData);
-      answer = askLLM(question);
+      answer = askLLM(question, "chinese_diagnosis");
       let chinese_diagnosis_guess = answer;
 
       question = replaceTemplatePlaceholders(q_get_hpi_q_by_chief_complaint, userData);
-      answer = askLLM(question);
+      answer = askLLM(question, `step_${cur_step+1}_question`);
       let next_q = answer;
       return {"west_diagnosis_guess": west_diagnosis_guess,
       "chinese_diagnosis_guess": chinese_diagnosis_guess,
@@ -121,25 +117,21 @@
     }
   }
 
-  function askLLM(question) {
-    let answer = "";
-    // Call the service API vis POST method
+  async function askLLM(question, id) {
     fetch("http://127.0.0.1:3096/hlx_llm_service", {
-      method: "POST",
-      body: JSON.stringify({
-        question: question
-      }),
-      headers: {
-        "Content-type": "application/json; charset=UTF-8"
-      }
-    })
+            method: "POST",
+            body: JSON.stringify({
+                question: question
+            }),
+            headers: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        })
             .then((response) => response.json())
             .then((json) => {
-              answer = json["answer"];
-              console.log(json)
-              document.getElementById('recordOutput').value = json["answer"];
+                console.log(json);
+                document.getElementById(id).innerText = json["answer"];
             });
-    return answer;
   }
 
   function replaceTemplatePlaceholders(template, userData) {
