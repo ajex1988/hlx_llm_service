@@ -118,6 +118,9 @@
       question = replaceTemplatePlaceholders(template["q_update_chinese_diagnosis_by_hpi"], userData);
       askLLM(question, "chinese_diagnosis");
 
+      question = replaceTemplatePlaceholders(template["complete_hpi"], userData);
+      askLLM2(question, "hpi_processed");
+
       currentStep++;
       const nextContent = document.createElement('div');
       nextContent.id = `step${currentStep}-content`;
@@ -144,6 +147,9 @@
 
       question = replaceTemplatePlaceholders(template["q_update_chinese_diagnosis_by_pmh"], userData);
       askLLM(question, "chinese_diagnosis");
+
+      question = replaceTemplatePlaceholders(template["complete_pmh"], userData);
+      askLLM2(question, "pmh_processed");
 
       currentStep++;
       const nextContent = document.createElement('div');
@@ -172,6 +178,9 @@
       question = replaceTemplatePlaceholders(template["q_update_chinese_diagnosis_by_personal_history"], userData);
       askLLM(question, "chinese_diagnosis");
 
+      question = replaceTemplatePlaceholders(template["complete_personal_history"], userData);
+      askLLM2(question, "personal_history_processed");
+
       currentStep++;
       const nextContent = document.createElement('div');
       nextContent.id = `step${currentStep}-content`;
@@ -195,6 +204,9 @@
 
       question = replaceTemplatePlaceholders(template["q_update_chinese_diagnosis_by_family_history"], userData);
       askLLM(question, "chinese_diagnosis");
+
+      question = replaceTemplatePlaceholders(template["complete_family_history"], userData);
+      askLLM2(question, "family_history_processed");
 
       currentStep++;
       const nextContent = document.createElement('div');
@@ -298,6 +310,23 @@
             });
   }
 
+  async function askLLM2(question, key) {
+    fetch("http://127.0.0.1:3096/hlx_llm_service", {
+            method: "POST",
+            body: JSON.stringify({
+                question: question
+            }),
+            headers: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        })
+            .then((response) => response.json())
+            .then((json) => {
+                console.log(`Q: ${question}\n A:${json["answer"]}`); // Debug only
+                userData[key] = json["answer"];
+            });
+  }
+
   function replaceTemplatePlaceholders(t, userData) {
     let message = t;
 
@@ -377,7 +406,7 @@
     let physical_exam = document.getElementById("physical_exam").value;
     let specialist_exam = document.getElementById("specialist_exam").value;
     let auxiliary_exam = document.getElementById("auxiliary_exam").value;
-    let medical_history_summary = document.getElementById("medical_history_summary").value;
+    let medical_record_summary = document.getElementById("medical_record_summary").value;
     let preliminary_tcm_diagnosis = document.getElementById("preliminary_tcm_diagnosis").value;
     let preliminary_west_diagnosis = document.getElementById("preliminary_west_diagnosis").value;
 
