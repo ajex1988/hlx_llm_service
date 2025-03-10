@@ -68,6 +68,7 @@
       updateInfo(currentStep);
     }
     else {
+      analyzeAndExtract();
       generateReport();
     }
   }
@@ -359,6 +360,88 @@
     nextContent.appendChild(downloadBtn);
     document.getElementById('main-content').appendChild(nextContent);
 
+  }
+
+  function analyzeAndExtract() {
+    // Analyze the user input and extract the info required in medical record
+    let q = "";
+    q = replaceTemplatePlaceholders(template["analyze_patient_name"], userData)
+    askLLM2(q, "patient_name");
+
+    q = replaceTemplatePlaceholders(template["analyze_department"], userData)
+    askLLM2(q, "department");
+
+    q = replaceTemplatePlaceholders(template["analyze_sex"], userData)
+    askLLM2(q, "sex");
+
+    q = replaceTemplatePlaceholders(template["analyze_address"], userData)
+    askLLM2(q, "address");
+
+    q = replaceTemplatePlaceholders(template["analyze_age"], userData)
+    askLLM2(q, "age");
+
+    q = replaceTemplatePlaceholders(template["analyze_contact"], userData)
+    askLLM2(q, "contact");
+
+    q = replaceTemplatePlaceholders(template["analyze_ethnicity"], userData)
+    askLLM2(q, "ethnicity");
+
+    q = replaceTemplatePlaceholders(template["analyze_admission_date"], userData)
+    askLLM2(q, "admission_date");
+
+    q = replaceTemplatePlaceholders(template["analyze_place_of_origin"], userData)
+    askLLM2(q, "place_of_origin");
+
+    q = replaceTemplatePlaceholders(template["analyze_marital_status"], userData)
+    askLLM2(q, "marital_status");
+
+    q = replaceTemplatePlaceholders(template["analyze_occupation"], userData)
+    askLLM2(q, "occupation");
+
+    q = replaceTemplatePlaceholders(template["analyze_allergies"], userData)
+    askLLM2(q, "allegies");
+
+    q = replaceTemplatePlaceholders(template["analyze_medical_record_summary"], userData)
+    askLLM2(q, "medical_record_summary");
+
+  }
+
+  function fillFields() {
+    // Fill the blanks in the medical report
+    document.getElementById("patient_name").value = userData["patient_name"];
+    document.getElementById("department").value = userData["department"];
+    document.getElementById("sex").value = userData["sex"];
+    document.getElementById("address").value = userData["address"];
+    document.getElementById("age").value = userData["age"];
+    document.getElementById("contact").value = userData["contact"];
+    document.getElementById("ethnicity").value = userData["ethnicity"];
+    document.getElementById("admission_date").value = userData["admission_date"];
+    document.getElementById("place_of_origin").value = userData["place_of_origin"];
+    document.getElementById("recording_date").value = userData["recording_date"];
+    document.getElementById("marital_status").value = userData["marital_status"];
+    //document.getElementById("source_of_history").value = userData["source_of_history"];
+    document.getElementById("occupation").value = userData["occupation"];
+    document.getElementById("allergies").value = userData["allergies"];
+
+    document.getElementById("chief_complaint").value = userData["chief_complaint"];
+    document.getElementById("hpi").value = userData["hpi_processed"];
+    document.getElementById("pmh").value = userData["pmh_processed"];
+    document.getElementById("personal_history").value = userData["personal_history_processed"];
+    // let menstrual_history = document.getElementById("menstrual_history").value;
+    // let marital_history = document.getElementById("marital_history").value;
+    document.getElementById("family_history").value = userData["family_history_processed"];
+    // let inspection = document.getElementById("inspection").value;
+    // let auscultation = document.getElementById("auscultation").value;
+    // let interview = document.getElementById("interview").value;
+    // let palpation = document.getElementById("palpation").value;
+
+    document.getElementById("physical_exam").value = userData["physical_exam"];
+    document.getElementById("specialist_exam").value = userData["specialist_exam"];
+    document.getElementById("auxiliary_exam").value = userData["auxiliary_exam"];
+    document.getElementById("medical_record_summary").value = userData["medical_record_summary"];
+
+    document.getElementById("preliminary_tcm_diagnosis").value = document.getElementById("west_diagnosis");
+    document.getElementById("preliminary_west_diagnosis").value = document.getElementById("chinese_diagnosis");
   }
 
   function toggleStylesheet() {
