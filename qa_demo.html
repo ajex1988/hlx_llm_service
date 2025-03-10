@@ -364,6 +364,7 @@
 
   function analyzeAndExtract() {
     // Analyze the user input and extract the info required in medical record
+    userData["other_info"] = document.getElementById("answer8").value;
     let q = "";
     q = replaceTemplatePlaceholders(template["analyze_patient_name"], userData)
     askLLM2(q, "patient_name");
