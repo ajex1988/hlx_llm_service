@@ -328,6 +328,23 @@
             });
   }
 
+  async function askLLM3(question, id) {
+    fetch("http://127.0.0.1:3096/hlx_llm_service", {
+            method: "POST",
+            body: JSON.stringify({
+                question: question
+            }),
+            headers: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        })
+            .then((response) => response.json())
+            .then((json) => {
+                console.log(`Q: ${question}\n A:${json["answer"]}`); // Debug only
+                document.getElementById(id).value = json["answer"];
+            });
+  }
+
   function replaceTemplatePlaceholders(t, userData) {
     let message = t;
 
@@ -360,6 +377,7 @@
     nextContent.appendChild(downloadBtn);
     document.getElementById('main-content').appendChild(nextContent);
 
+    fillFields();
   }
 
   function analyzeAndExtract() {
@@ -367,62 +385,62 @@
     userData["other_info"] = document.getElementById("answer8").value;
     let q = "";
     q = replaceTemplatePlaceholders(template["analyze_patient_name"], userData)
-    askLLM2(q, "patient_name");
+    askLLM3(q, "patient_name");
 
     q = replaceTemplatePlaceholders(template["analyze_department"], userData)
-    askLLM2(q, "department");
+    askLLM3(q, "department");
 
     q = replaceTemplatePlaceholders(template["analyze_sex"], userData)
-    askLLM2(q, "sex");
+    askLLM3(q, "sex");
 
     q = replaceTemplatePlaceholders(template["analyze_address"], userData)
-    askLLM2(q, "address");
+    askLLM3(q, "address");
 
     q = replaceTemplatePlaceholders(template["analyze_age"], userData)
-    askLLM2(q, "age");
+    askLLM3(q, "age");
 
     q = replaceTemplatePlaceholders(template["analyze_contact"], userData)
-    askLLM2(q, "contact");
+    askLLM3(q, "contact");
 
     q = replaceTemplatePlaceholders(template["analyze_ethnicity"], userData)
-    askLLM2(q, "ethnicity");
+    askLLM3(q, "ethnicity");
 
     q = replaceTemplatePlaceholders(template["analyze_admission_date"], userData)
-    askLLM2(q, "admission_date");
+    askLLM3(q, "admission_date");
 
     q = replaceTemplatePlaceholders(template["analyze_place_of_origin"], userData)
-    askLLM2(q, "place_of_origin");
+    askLLM3(q, "place_of_origin");
 
     q = replaceTemplatePlaceholders(template["analyze_marital_status"], userData)
-    askLLM2(q, "marital_status");
+    askLLM3(q, "marital_status");
 
     q = replaceTemplatePlaceholders(template["analyze_occupation"], userData)
-    askLLM2(q, "occupation");
+    askLLM3(q, "occupation");
 
     q = replaceTemplatePlaceholders(template["analyze_allergies"], userData)
-    askLLM2(q, "allegies");
+    askLLM3(q, "allegies");
 
     q = replaceTemplatePlaceholders(template["analyze_medical_record_summary"], userData)
-    askLLM2(q, "medical_record_summary");
+    askLLM3(q, "medical_record_summary");
 
   }
 
   function fillFields() {
     // Fill the blanks in the medical report
-    document.getElementById("patient_name").value = userData["patient_name"];
-    document.getElementById("department").value = userData["department"];
-    document.getElementById("sex").value = userData["sex"];
-    document.getElementById("address").value = userData["address"];
-    document.getElementById("age").value = userData["age"];
-    document.getElementById("contact").value = userData["contact"];
-    document.getElementById("ethnicity").value = userData["ethnicity"];
-    document.getElementById("admission_date").value = userData["admission_date"];
-    document.getElementById("place_of_origin").value = userData["place_of_origin"];
-    document.getElementById("recording_date").value = userData["recording_date"];
-    document.getElementById("marital_status").value = userData["marital_status"];
-    //document.getElementById("source_of_history").value = userData["source_of_history"];
-    document.getElementById("occupation").value = userData["occupation"];
-    document.getElementById("allergies").value = userData["allergies"];
+    // document.getElementById("patient_name").value = userData["patient_name"];
+    // document.getElementById("department").value = userData["department"];
+    // document.getElementById("sex").value = userData["sex"];
+    // document.getElementById("address").value = userData["address"];
+    // document.getElementById("age").value = userData["age"];
+    // document.getElementById("contact").value = userData["contact"];
+    // document.getElementById("ethnicity").value = userData["ethnicity"];
+    // document.getElementById("admission_date").value = userData["admission_date"];
+    // document.getElementById("place_of_origin").value = userData["place_of_origin"];
+    // document.getElementById("recording_date").value = userData["recording_date"];
+    // document.getElementById("marital_status").value = userData["marital_status"];
+    // //document.getElementById("source_of_history").value = userData["source_of_history"];
+    // document.getElementById("occupation").value = userData["occupation"];
+    // document.getElementById("allergies").value = userData["allergies"];
 
     document.getElementById("chief_complaint").value = userData["chief_complaint"];
     document.getElementById("hpi").value = userData["hpi_processed"];
