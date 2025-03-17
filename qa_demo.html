@@ -80,6 +80,14 @@
       document.getElementById(`step${currentStep}`).classList.remove("active");
       document.getElementById(`step${currentStep + 1}`).classList.add("active");
       document.getElementById(`step${currentStep}-content`).classList.add("hidden");
+
+      const indicatorContent = document.createElement('div');
+      indicatorContent.id = "loading-indicator";
+      indicatorContent.classList.add("loading");
+      indicatorContent.classList.add("hidden");
+      indicatorContent.innerHTML = '哈力馨GPT思考中<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>';
+      document.getElementById('main-content').appendChild(indicatorContent);
+
       // 主诉
       userData["chief_complaint"] = document.getElementById("chief-complaint").value;
 
@@ -109,6 +117,13 @@
       document.getElementById(`step${currentStep}-content`).classList.add("hidden");
       // 现病史
       userData["hpi"] = document.getElementById(`answer${cur_step}`).value;
+
+      const indicatorContent = document.createElement('div');
+      indicatorContent.id = "loading-indicator";
+      indicatorContent.classList.add("loading");
+      indicatorContent.classList.add("hidden");
+      indicatorContent.innerHTML = '哈力馨GPT思考中<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>';
+      document.getElementById('main-content').appendChild(indicatorContent);
 
       question = replaceTemplatePlaceholders(template["q_get_pmh_q_by_chief_complaint"], userData);
       askLLM(question, `step_${cur_step+1}_question`);
@@ -140,6 +155,13 @@
       // 既往史
       userData["pmh"] = document.getElementById(`answer${cur_step}`).value;
 
+      const indicatorContent = document.createElement('div');
+      indicatorContent.id = "loading-indicator";
+      indicatorContent.classList.add("loading");
+      indicatorContent.classList.add("hidden");
+      indicatorContent.innerHTML = '哈力馨GPT思考中<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>';
+      document.getElementById('main-content').appendChild(indicatorContent);
+
       question = replaceTemplatePlaceholders(template["q_get_personal_history_by_chief_complaint"], userData);
       askLLM(question, `step_${cur_step+1}_question`);
 
@@ -169,6 +191,13 @@
       document.getElementById(`step${currentStep}-content`).classList.add("hidden");
       // 个人史
       userData["personal_history"] = document.getElementById(`answer${cur_step}`).value;
+
+      const indicatorContent = document.createElement('div');
+      indicatorContent.id = "loading-indicator";
+      indicatorContent.classList.add("loading");
+      indicatorContent.classList.add("hidden");
+      indicatorContent.innerHTML = '哈力馨GPT思考中<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>';
+      document.getElementById('main-content').appendChild(indicatorContent);
 
       question = replaceTemplatePlaceholders(template["q_get_family_history_q_by_chief_complaint"], userData);
       askLLM(question, `step_${cur_step+1}_question`);
@@ -200,6 +229,13 @@
       // 家族史
       userData["family_history"] = document.getElementById(`answer${cur_step}`).value;
 
+      const indicatorContent = document.createElement('div');
+      indicatorContent.id = "loading-indicator";
+      indicatorContent.classList.add("loading");
+      indicatorContent.classList.add("hidden");
+      indicatorContent.innerHTML = '哈力馨GPT思考中<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>';
+      document.getElementById('main-content').appendChild(indicatorContent);
+
       question = replaceTemplatePlaceholders(template["q_update_west_diagnosis_by_family_history"], userData);
       askLLM(question, "west_diagnosis");
 
@@ -219,6 +255,8 @@
                        <button class="next-button" onclick="nextStep()">下一步</button>
                    `;
       document.getElementById('main-content').appendChild(nextContent);
+
+      document.getElementById("loading-indicator").classList.add("hidden");
     }
     else if (cur_step === 5) {
       document.getElementById(`step${currentStep}`).classList.remove("active");
@@ -226,6 +264,8 @@
       document.getElementById(`step${currentStep}-content`).classList.add("hidden");
       // 体格检查
       userData["physical_exam"] = document.getElementById(`answer${cur_step}`).value;
+
+      document.getElementById("loading-indicator").classList.add("hidden");
 
       question = replaceTemplatePlaceholders(template["q_update_west_diagnosis_by_physical_exam"], userData);
       askLLM(question, "west_diagnosis");
@@ -243,6 +283,7 @@
                        <button class="next-button" onclick="nextStep()">下一步</button>
                    `;
       document.getElementById('main-content').appendChild(nextContent);
+      document.getElementById("loading-indicator").classList.add("hidden");
     }
     else if (cur_step === 6) {
       document.getElementById(`step${currentStep}`).classList.remove("active");
@@ -267,6 +308,7 @@
                        <button class="next-button" onclick="nextStep()">下一步</button>
                    `;
       document.getElementById('main-content').appendChild(nextContent);
+      document.getElementById("loading-indicator").classList.add("hidden");
     }
     else if (cur_step === 7) {
       document.getElementById(`step${currentStep}`).classList.remove("active");
@@ -291,10 +333,13 @@
                        <button class="next-button" onclick="nextStep()">下一步</button>
                    `;
       document.getElementById('main-content').appendChild(nextContent);
+      document.getElementById("loading-indicator").classList.add("hidden");
     }
   }
 
   async function askLLM(question, id) {
+    const loadingIndicator = document.getElementById('loading-indicator');
+    loadingIndicator.classList.remove('hidden');
     fetch("http://127.0.0.1:3096/hlx_llm_service", {
             method: "POST",
             body: JSON.stringify({
@@ -308,7 +353,16 @@
             .then((json) => {
                 console.log(`Q: ${question}\n A:${json["answer"]}`); // Debug only
                 document.getElementById(id).innerText = json["answer"];
-            });
+            })
+            .catch((error)=> {
+              console.error('Error:', error);
+            })
+            .finally(()=> {
+              if (id !== "west_diagnosis" && id !== "chinese_diagnosis") {
+                loadingIndicator.classList.add('hidden');
+              }
+
+            })
   }
 
   async function askLLM2(question, key) {
@@ -459,8 +513,8 @@
     document.getElementById("auxiliary_exam").value = userData["auxiliary_exam"];
     document.getElementById("medical_history_summary").value = userData["medical_history_summary"];
 
-    document.getElementById("preliminary_tcm_diagnosis").value = document.getElementById("west_diagnosis");
-    document.getElementById("preliminary_west_diagnosis").value = document.getElementById("chinese_diagnosis");
+    document.getElementById("preliminary_tcm_diagnosis").value = document.getElementById("west_diagnosis").value;
+    document.getElementById("preliminary_west_diagnosis").value = document.getElementById("chinese_diagnosis").value;
   }
 
   function toggleStylesheet() {

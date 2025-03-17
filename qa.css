@@ -55,6 +55,34 @@ body {
     display: none;
 }
 
+.loading {
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 20px;
+    text-align:center;
+}
+
+.dot {
+    animation: blink 1.5s infinite;
+}
+
+.dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes blink {
+    0%, 20% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
 .question {
     margin: 20px 0;
     font-size: 28px;
