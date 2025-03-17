@@ -14,7 +14,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_path', type=str, default='./', help='Model Directory')
     parser.add_argument('--port', type=int, default=3096)
-    parser.add_argument('--max_new_tokens', type=int, default=50000)
+    parser.add_argument('--max_new_tokens', type=int, default=5000)
     parser.add_argument('--max_concurrent', type=int, default=5)
 
     args = parser.parse_args()
