@@ -19,3 +19,8 @@ Install the required libraries
 pip install -r requirements.txt
 ```
 
+## Update
+### 2025/03/17
+After a discussion with Batter, two modifications to be made:
+1. After the specialist exam, there should be a preliminary diagnosis. This is editable, so doctors can modify if it is not accurate
+2. Based on the premilinary diagnosis, there should be a treatment plan. Then after auxiliary exam, there should be final diagnosis appeared in the medical record.
