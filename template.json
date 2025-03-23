@@ -24,6 +24,9 @@
   "q_update_west_diagnosis_by_auxiliary_exam": "病人的主诉是{chief_complaint}，现病史为{hpi}，既往史为{pmh}，个人史为{personal_history}，家族史为{family_history}，体格检查为{physical_exam},专科检查为{specialist_exam},请给出可能性最高的西医诊断结果。请给出尽量精简的答案，字数不要超过20个字。问题的答案会直接返回给用户，因此请不要添加任何多余的评论。",
   "q_update_chinese_diagnosis_by_auxiliary_exam": "病人的主诉是{chief_complaint}，现病史为{hpi}，既往史为{pmh}，个人史为{personal_history}，家族史为{family_history}，体格检查为{physical_exam},专科检查为{specialist_exam},请给出可能性最高的中医诊断结果。请给出尽量精简的答案，字数不要超过20个字。问题的答案会直接返回给用户，因此请不要添加任何多余的评论。",
 
+  "get_physical_exam_template": "病人的初步中医诊断为{preliminary_tcm_diagnosis}，初步西医诊断为{preliminary_west_diagnosis}。请根据医学标准，给出相对应的体格检查的模板，具体的检查结果处可以空出来让用户自行填写。问题的答案会直接返回给用户，因此请一定不要添加任何多余的评论。",
+  "get_specialist_exam_template": "病人的初步中医诊断为{preliminary_tcm_diagnosis}，初步西医诊断为{preliminary_west_diagnosis}。请根据医学标准，给出相对应的专科检查的模板，具体的检查结果处可以空出来让用户自行填写。问题的答案会直接返回给用户，因此请一定不要添加任何多余的评论。",
+
   "get_treatment_plan_tcm": "病人的初步中医诊断为{preliminary_tcm_diagnosis}，初步西医诊断为{preliminary_west_diagnosis}。请根据医学标准，给出相对应的中医治疗方案。问题的答案会直接返回给用户，因此请不要添加任何多余的评论。",
   "get_treatment_plan_west": "病人的初步中医诊断为{preliminary_tcm_diagnosis}，初步西医诊断为{preliminary_west_diagnosis}。请根据医学标准，给出相对应的西医治疗方案。问题的答案会直接返回给用户，因此请不要添加任何多余的评论。",
   "get_treatment_plan_mongolia": "病人的初步中医诊断为{preliminary_tcm_diagnosis}，初步西医诊断为{preliminary_west_diagnosis}。请根据医学标准，给出相对应的蒙医治疗方案。问题的答案会直接返回给用户，因此请不要添加任何多余的评论。",

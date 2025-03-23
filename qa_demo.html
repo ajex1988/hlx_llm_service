@@ -20,9 +20,11 @@
   <div id="step4" class="sidebar-item">家族史</div>
   <div id="step5" class="sidebar-item">体格检查</div>
   <div id="step6" class="sidebar-item">专科检查</div>
-  <div id="step7" class="sidebar-item">辅助检查</div>
-  <div id="step8" class="sidebar-item">其他信息</div>
-  <div id="step9" class="sidebar-item">病历生成</div>
+  <div id="step7" class="sidebar-item">初步诊断</div>
+  <div id="step8" class="sidebar-item">治疗方案</div>
+  <div id="step9" class="sidebar-item">辅助检查</div>
+  <div id="step10" class="sidebar-item">其他信息</div>
+  <div id="step11" class="sidebar-item">病历生成</div>
 </div>
 
 <div class="main-content" id="main-content">
@@ -49,7 +51,7 @@
 
 <script>
   let currentStep = 0;
-  const steps = 9;
+  const steps = 11;
   let template = {};
   let userData = {};
 
@@ -251,12 +253,14 @@
       nextContent.classList.add('content');
       nextContent.innerHTML = `
                        <div id="step_${currentStep}_question" class="question">${template["q_physical_exam"]}</div>
-                       <input type="text" id="answer${currentStep}" class="input-field" />
+                       <input type="text" id="answer${currentStep}" class="input-field" placeholder="体格检查模板生产中..." />
                        <button class="next-button" onclick="nextStep()">下一步</button>
                    `;
       document.getElementById('main-content').appendChild(nextContent);
-
       document.getElementById("loading-indicator").classList.add("hidden");
+      // Get physical_exam template
+      question = replaceTemplatePlaceholders(template["get_physical_exam_template"], {"preliminary_tcm_diagnosis":document.getElementById("chinese_diagnosis").value, "preliminary_west_diagnosis":document.getElementById("west_diagnosis").value});
+      askLLM3(question, `answer${currentStep}`);
     }
     else if (cur_step === 5) {
       document.getElementById(`step${currentStep}`).classList.remove("active");
@@ -303,7 +307,41 @@
       nextContent.id = `step${currentStep}-content`;
       nextContent.classList.add('content');
       nextContent.innerHTML = `
-                       <div id="step_${currentStep}_question" class="question">${template["q_auxiliary_exam"]}</div>
+                       <div id="step_preliminary_west_diagnosis" class="question">初步西医诊断</div>
+                       <input type="text" id="answer_preliminary_west_diagnosis" class="input-field" />
+                       <div id="step_preliminary_tcm_diagnosis" class="question">初步中医诊断</div>
+                       <input type="text" id="answer_preliminary_tcm_diagnosis" class="input-field" />
+                       <button class="next-button" onclick="nextStep()">治疗方案</button>
+                   `;
+      document.getElementById('main-content').appendChild(nextContent);
+      document.getElementById("loading-indicator").classList.add("hidden");
+      // Synchronize the text area
+      document.getElementById("answer_preliminary_west_diagnosis").addEventListener('input', ()=>{
+        document.getElementById("answer_preliminary_west_diagnosis").value = document.getElementById("preliminary_west_diagnosis").value;
+      })
+      document.getElementById("answer_preliminary_tcm_diagnosis").addEventListener('input', ()=>{
+        document.getElementById("answer_preliminary_tcm_diagnosis").value = document.getElementById("preliminary_tcm_diagnosis").value;
+      })
+
+    }
+    else if (cur_step === 7) {
+      document.getElementById(`step${currentStep}`).classList.remove("active");
+      document.getElementById(`step${currentStep + 1}`).classList.add("active");
+      document.getElementById(`step${currentStep}-content`).classList.add("hidden");
+      // 初步诊断
+
+      question = replaceTemplatePlaceholders(template["q_update_west_diagnosis_by_auxiliary_exam"], userData);
+      askLLM(question, "west_diagnosis");
+
+      question = replaceTemplatePlaceholders(template["q_update_chinese_diagnosis_by_auxiliary_exam"], userData);
+      askLLM(question, "chinese_diagnosis");
+
+      currentStep++;
+      const nextContent = document.createElement('div');
+      nextContent.id = `step${currentStep}-content`;
+      nextContent.classList.add('content');
+      nextContent.innerHTML = `
+                       <div id="step_${currentStep}_question" class="question"></div>
                        <input type="text" id="answer${currentStep}" class="input-field" />
                        <button class="next-button" onclick="nextStep()">下一步</button>
                    `;
@@ -335,6 +373,32 @@
       document.getElementById('main-content').appendChild(nextContent);
       document.getElementById("loading-indicator").classList.add("hidden");
     }
+    else if (cur_step === 7) {
+      document.getElementById(`step${currentStep}`).classList.remove("active");
+      document.getElementById(`step${currentStep + 1}`).classList.add("active");
+      document.getElementById(`step${currentStep}-content`).classList.add("hidden");
+      // 辅助检查
+      userData["auxiliary_exam"] = document.getElementById(`answer${cur_step}`).value;
+
+      question = replaceTemplatePlaceholders(template["q_update_west_diagnosis_by_auxiliary_exam"], userData);
+      askLLM(question, "west_diagnosis");
+
+      question = replaceTemplatePlaceholders(template["q_update_chinese_diagnosis_by_auxiliary_exam"], userData);
+      askLLM(question, "chinese_diagnosis");
+
+      currentStep++;
+      const nextContent = document.createElement('div');
+      nextContent.id = `step${currentStep}-content`;
+      nextContent.classList.add('content');
+      nextContent.innerHTML = `
+                       <div id="step_${currentStep}_question" class="question">${template["q_other_info"]}</div>
+                       <input type="text" id="answer${currentStep}" class="input-field" />
+                       <button class="next-button" onclick="nextStep()">下一步</button>
+                   `;
+      document.getElementById('main-content').appendChild(nextContent);
+      document.getElementById("loading-indicator").classList.add("hidden");
+    }
+
   }
 
   async function askLLM(question, id) {
