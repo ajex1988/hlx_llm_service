@@ -253,7 +253,7 @@
       nextContent.classList.add('content');
       nextContent.innerHTML = `
                        <div id="step_${currentStep}_question" class="question">${template["q_physical_exam"]}</div>
-                       <input type="text" id="answer${currentStep}" class="input-field" placeholder="体格检查模板生产中..." />
+                       <input type="text" id="answer${currentStep}" class="input-field" placeholder="体格检查模板生成中..." />
                        <button class="next-button" onclick="nextStep()">下一步</button>
                    `;
       document.getElementById('main-content').appendChild(nextContent);
@@ -283,11 +283,14 @@
       nextContent.classList.add('content');
       nextContent.innerHTML = `
                        <div id="step_${currentStep}_question" class="question">${template["q_specialist_exam"]}</div>
-                       <input type="text" id="answer${currentStep}" class="input-field" />
+                       <input type="text" id="answer${currentStep}" class="input-field" placeholder="专科检查模板生成中..."/>
                        <button class="next-button" onclick="nextStep()">下一步</button>
                    `;
       document.getElementById('main-content').appendChild(nextContent);
       document.getElementById("loading-indicator").classList.add("hidden");
+      // Get specialist exam template
+      question = replaceTemplatePlaceholders(template["get_specialist_exam_template"], {"preliminary_tcm_diagnosis":document.getElementById("chinese_diagnosis").value, "preliminary_west_diagnosis":document.getElementById("west_diagnosis").value});
+      askLLM3(question, `answer${currentStep}`);
     }
     else if (cur_step === 6) {
       document.getElementById(`step${currentStep}`).classList.remove("active");
@@ -314,14 +317,17 @@
                        <button class="next-button" onclick="nextStep()">治疗方案</button>
                    `;
       document.getElementById('main-content').appendChild(nextContent);
+      document.getElementById("answer_preliminary_west_diagnosis").value = document.getElementById("west_diagnosis").innerText;
+      document.getElementById("answer_preliminary_tcm_diagnosis").value = document.getElementById("chinese_diagnosis").innerText;
+
       document.getElementById("loading-indicator").classList.add("hidden");
       // Synchronize the text area
-      document.getElementById("answer_preliminary_west_diagnosis").addEventListener('input', ()=>{
-        document.getElementById("answer_preliminary_west_diagnosis").value = document.getElementById("preliminary_west_diagnosis").value;
-      })
-      document.getElementById("answer_preliminary_tcm_diagnosis").addEventListener('input', ()=>{
-        document.getElementById("answer_preliminary_tcm_diagnosis").value = document.getElementById("preliminary_tcm_diagnosis").value;
-      })
+      document.getElementById("west_diagnosis").addEventListener('input', ()=>{
+        document.getElementById("answer_preliminary_west_diagnosis").value = document.getElementById("west_diagnosis").innerText;
+      });
+      document.getElementById("chinese_diagnosis").addEventListener('input', ()=>{
+        document.getElementById("answer_preliminary_tcm_diagnosis").value = document.getElementById("chinese_diagnosis").innerText;
+      });
 
     }
     else if (cur_step === 7) {
