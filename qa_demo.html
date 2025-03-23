@@ -259,7 +259,7 @@
       document.getElementById('main-content').appendChild(nextContent);
       document.getElementById("loading-indicator").classList.add("hidden");
       // Get physical_exam template
-      question = replaceTemplatePlaceholders(template["get_physical_exam_template"], {"preliminary_tcm_diagnosis":document.getElementById("chinese_diagnosis").value, "preliminary_west_diagnosis":document.getElementById("west_diagnosis").value});
+      question = replaceTemplatePlaceholders(template["get_physical_exam_template"], {"preliminary_tcm_diagnosis":document.getElementById("chinese_diagnosis").innerText, "preliminary_west_diagnosis":document.getElementById("west_diagnosis").innerText});
       askLLM3(question, `answer${currentStep}`);
     }
     else if (cur_step === 5) {
@@ -289,7 +289,7 @@
       document.getElementById('main-content').appendChild(nextContent);
       document.getElementById("loading-indicator").classList.add("hidden");
       // Get specialist exam template
-      question = replaceTemplatePlaceholders(template["get_specialist_exam_template"], {"preliminary_tcm_diagnosis":document.getElementById("chinese_diagnosis").value, "preliminary_west_diagnosis":document.getElementById("west_diagnosis").value});
+      question = replaceTemplatePlaceholders(template["get_specialist_exam_template"], {"preliminary_tcm_diagnosis":document.getElementById("chinese_diagnosis").innerText, "preliminary_west_diagnosis":document.getElementById("west_diagnosis").innerText});
       askLLM3(question, `answer${currentStep}`);
     }
     else if (cur_step === 6) {
@@ -334,27 +334,28 @@
       document.getElementById(`step${currentStep}`).classList.remove("active");
       document.getElementById(`step${currentStep + 1}`).classList.add("active");
       document.getElementById(`step${currentStep}-content`).classList.add("hidden");
-      // 初步诊断
 
-      question = replaceTemplatePlaceholders(template["q_update_west_diagnosis_by_auxiliary_exam"], userData);
-      askLLM(question, "west_diagnosis");
+      question = replaceTemplatePlaceholders(template["get_treatment_plan_west"], {"preliminary_west_diagnosis":document.getElementById("west_diagnosis").innerText});
+      askLLM3(question, "answer_west_treatment_plan");
 
-      question = replaceTemplatePlaceholders(template["q_update_chinese_diagnosis_by_auxiliary_exam"], userData);
-      askLLM(question, "chinese_diagnosis");
+      question = replaceTemplatePlaceholders(template["get_treatment_plan_tcm"], {"preliminary_tcm_diagnosis":document.getElementById("chinese_diagnosis").innerText});
+      askLLM3(question, "answer_chinese_treatment_plan");
 
       currentStep++;
       const nextContent = document.createElement('div');
       nextContent.id = `step${currentStep}-content`;
       nextContent.classList.add('content');
       nextContent.innerHTML = `
-                       <div id="step_${currentStep}_question" class="question"></div>
-                       <input type="text" id="answer${currentStep}" class="input-field" />
+                       <div id="step_west_treatment_plan" class="question">西医治疗方案</div>
+                       <input type="text" id="answer_west_treatment_plan" class="input-field" placeholder="西医治疗方案生成中..." />
+                       <div id="step_chinese_treatment_plan" class="question">初步中医诊断</div>
+                       <input type="text" id="answer_chinese_treatment_plan" class="input-field" placeholder="中医治疗方案生成中..." />
                        <button class="next-button" onclick="nextStep()">下一步</button>
                    `;
       document.getElementById('main-content').appendChild(nextContent);
       document.getElementById("loading-indicator").classList.add("hidden");
     }
-    else if (cur_step === 7) {
+    else if (cur_step === 8) {
       document.getElementById(`step${currentStep}`).classList.remove("active");
       document.getElementById(`step${currentStep + 1}`).classList.add("active");
       document.getElementById(`step${currentStep}-content`).classList.add("hidden");
@@ -379,7 +380,7 @@
       document.getElementById('main-content').appendChild(nextContent);
       document.getElementById("loading-indicator").classList.add("hidden");
     }
-    else if (cur_step === 7) {
+    else if (cur_step === 9) {
       document.getElementById(`step${currentStep}`).classList.remove("active");
       document.getElementById(`step${currentStep + 1}`).classList.add("active");
       document.getElementById(`step${currentStep}-content`).classList.add("hidden");
