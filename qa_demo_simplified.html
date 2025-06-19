@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/docx@9.1.0/build/index.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.js"></script>
+  <meta charset="UTF-8">
+  <title>哈力馨GPT智能诊疗系统</title>
+  <link rel="stylesheet" id="qa-style" href="qa.css">
+  <link rel="stylesheet" id="medical-record-style" href="medical_record.css" disabled>
+</head>
+
+<body>
+<div class="sidebar" id="progress-sidebar">
+  <div class="sidebar-title">哈力馨GPT智能诊疗系统</div>
+  <div id="step0" class="sidebar-item active">主诉</div>
+  <div id="step1" class="sidebar-item">现病史</div>
+  <div id="step2" class="sidebar-item">既往史</div>
+  <div id="step3" class="sidebar-item">个人史</div>
+  <div id="step4" class="sidebar-item">家族史</div>
+  <div id="step5" class="sidebar-item">体格检查</div>
+  <div id="step6" class="sidebar-item">专科检查</div>
+  <div id="step7" class="sidebar-item">初步诊断</div>
+  <div id="step8" class="sidebar-item">治疗方案</div>
+  <div id="step9" class="sidebar-item">辅助检查</div>
+  <div id="step10" class="sidebar-item">其他信息</div>
+  <div id="step11" class="sidebar-item">病历生成</div>
+</div>
+
+<div class="main-content" id="main-content">
+  <div id="step0-content" class="content">
+    <div class="question">请问您今天主要有什么不适？（主诉）</div>
+    <label>
+    <textarea id="chief-complaint" class="input-field" >
+    </textarea>
+    </label>
+    <button class="next-button" onclick="nextStep()">下一步</button>
+  </div>
+</div>
+
+<div class="result-sidebar" id="result-sidebar">
+  <div>西医诊断结果</div>
+  <div id="western-diagnosis">
+    <div id="west_diagnosis" class="result-item main">诊断1</div>
+  </div>
+  <div>中医诊断结果</div>
+  <div id="chinese-diagnosis">
+    <div id="chinese_diagnosis" class="result-item main">诊断1</div>
+  </div>
+</div>
+
+<script>
+  let currentStep = 0;
+  const steps = 11;
+  let template = {};
+  let userData = {};
+
+  document.addEventListener("DOMContentLoaded", () => {
+    fetch('./template.json')
+            .then(response => response.json())
+            .then(data => {
+              template = data;
+            })
+            .catch(error => console.error('Error loading long string:', error));
+  });
+
+
+  function nextStep() {
+    if (currentStep < steps-1) {
+      updateInfo(currentStep);
+    }
+    else {
+      analyzeAndExtract();
+      generateReport();
+    }
+  }
+
+  function updateInfo(cur_step) {
+    let question = "";
+    // hard code the logic, for demo only
+    if (cur_step === 0) {
+      document.getElementById(`step${currentStep}`).classList.remove("active");
+      document.getElementById(`step${currentStep + 1}`).classList.add("active");
+      document.getElementById(`step${currentStep}-content`).classList.add("hidden");
+
+      const indicatorContent = document.createElement('div');
+      indicatorContent.id = "loading-indicator";
+      indicatorContent.classList.add("loading");
+      indicatorContent.classList.add("hidden");
+      indicatorContent.innerHTML = '哈力馨GPT思考中<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>';
+      document.getElementById('main-content').appendChild(indicatorContent);
+
+      // 主诉
+      userData["chief_complaint"] = document.getElementById("chief-complaint").value;
+
+      question = replaceTemplatePlaceholders(template["q_get_hpi_q_by_chief_complaint"], userData);
+      askLLM(question, `step_${cur_step+1}_question`);
+
+      question = replaceTemplatePlaceholders(template["q_west_diagnosis_by_chief_complaint"], userData);
+      askLLM(question, "west_diagnosis");
+
+      question = replaceTemplatePlaceholders(template["q_chinese_diagnosis_by_chief_complaint"], userData);
+      askLLM(question, "chinese_diagnosis");
+
+      currentStep++;
+      const nextContent = document.createElement('div');
+      nextContent.id = `step${currentStep}-content`;
+      nextContent.classList.add('content');
+      nextContent.innerHTML = `
+                       <div id="step_${currentStep}_question" class="question"></div>
+                       <input type="text" id="answer${currentStep}" class="input-field" />
+                       <button class="next-button" onclick="nextStep()">下一步</button>
+                   `;
+      document.getElementById('main-content').appendChild(nextContent);
+    }
+    else if (cur_step === 1) {
+      document.getElementById(`step${currentStep}`).classList.remove("active");
+      document.getElementById(`step${currentStep + 1}`).classList.add("active");
+      document.getElementById(`step${currentStep}-content`).classList.add("hidden");
+      // 现病史
+      userData["hpi"] = document.getElementById(`answer${cur_step}`).value;
+
+      const indicatorContent = document.createElement('div');
+      indicatorContent.id = "loading-indicator";
+      indicatorContent.classList.add("loading");
+      indicatorContent.classList.add("hidden");
+      indicatorContent.innerHTML = '哈力馨GPT思考中<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>';
+      document.getElementById('main-content').appendChild(indicatorContent);
+
+      question = replaceTemplatePlaceholders(template["q_get_pmh_q_by_chief_complaint"], userData);
+      askLLM(question, `step_${cur_step+1}_question`);
+
+      question = replaceTemplatePlaceholders(template["q_update_west_diagnosis_by_hpi"], userData);
+      askLLM(question, "west_diagnosis");
+
+      question = replaceTemplatePlaceholders(template["q_update_chinese_diagnosis_by_hpi"], userData);
+      askLLM(question, "chinese_diagnosis");
+
+      question = replaceTemplatePlaceholders(template["complete_hpi"], userData);
+      askLLM2(question, "hpi_processed");
+
+      currentStep++;
+      const nextContent = document.createElement('div');
+      nextContent.id = `step${currentStep}-content`;
+      nextContent.classList.add('content');
+      nextContent.innerHTML = `
+                       <div id="step_${currentStep}_question" class="question"></div>
+                       <input type="text" id="answer${currentStep}" class="input-field" />
+                       <button class="next-button" onclick="nextStep()">下一步</button>
+                   `;
+      document.getElementById('main-content').appendChild(nextContent);
+    }
+    else if (cur_step === 2) {
+      document.getElementById(`step${currentStep}`).classList.remove("active");
+      document.getElementById(`step${currentStep + 1}`).classList.add("active");
+      document.getElementById(`step${currentStep}-content`).classList.add("hidden");
+      // 既往史
+      userData["pmh"] = document.getElementById(`answer${cur_step}`).value;
+
+      const indicatorContent = document.createElement('div');
+      indicatorContent.id = "loading-indicator";
+      indicatorContent.classList.add("loading");
+      indicatorContent.classList.add("hidden");
+      indicatorContent.innerHTML = '哈力馨GPT思考中<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>';
+      document.getElementById('main-content').appendChild(indicatorContent);
+
+      question = replaceTemplatePlaceholders(template["q_get_personal_history_by_chief_complaint"], userData);
+      askLLM(question, `step_${cur_step+1}_question`);
+
+      question = replaceTemplatePlaceholders(template["q_update_west_diagnosis_by_pmh"], userData);
+      askLLM(question, "west_diagnosis");
+
+      question = replaceTemplatePlaceholders(template["q_update_chinese_diagnosis_by_pmh"], userData);
+      askLLM(question, "chinese_diagnosis");
+
+      question = replaceTemplatePlaceholders(template["complete_pmh"], userData);
+      askLLM2(question, "pmh_processed");
+
+      currentStep++;
+      const nextContent = document.createElement('div');
+      nextContent.id = `step${currentStep}-content`;
+      nextContent.classList.add('content');
+      nextContent.innerHTML = `
+                       <div id="step_${currentStep}_question" class="question"></div>
+                       <input type="text" id="answer${currentStep}" class="input-field" />
+                       <button class="next-button" onclick="nextStep()">下一步</button>
+                   `;
+      document.getElementById('main-content').appendChild(nextContent);
+    }
+    else if (cur_step === 3) {
+      document.getElementById(`step${currentStep}`).classList.remove("active");
+      document.getElementById(`step${currentStep + 1}`).classList.add("active");
+      document.getElementById(`step${currentStep}-content`).classList.add("hidden");
+      // 个人史
+      userData["personal_history"] = document.getElementById(`answer${cur_step}`).value;
+
+      const indicatorContent = document.createElement('div');
+      indicatorContent.id = "loading-indicator";
+      indicatorContent.classList.add("loading");
+      indicatorContent.classList.add("hidden");
+      indicatorContent.innerHTML = '哈力馨GPT思考中<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>';
+      document.getElementById('main-content').appendChild(indicatorContent);
+
+      question = replaceTemplatePlaceholders(template["q_get_family_history_q_by_chief_complaint"], userData);
+      askLLM(question, `step_${cur_step+1}_question`);
+
+      question = replaceTemplatePlaceholders(template["q_update_west_diagnosis_by_personal_history"], userData);
+      askLLM(question, "west_diagnosis");
+
+      question = replaceTemplatePlaceholders(template["q_update_chinese_diagnosis_by_personal_history"], userData);
+      askLLM(question, "chinese_diagnosis");
+
+      question = replaceTemplatePlaceholders(template["complete_personal_history"], userData);
+      askLLM2(question, "personal_history_processed");
+
+      currentStep++;
+      const nextContent = document.createElement('div');
+      nextContent.id = `step${currentStep}-content`;
+      nextContent.classList.add('content');
+      nextContent.innerHTML = `
+                       <div id="step_${currentStep}_question" class="question"></div>
+                       <input type="text" id="answer${currentStep}" class="input-field" />
+                       <button class="next-button" onclick="nextStep()">下一步</button>
+                   `;
+      document.getElementById('main-content').appendChild(nextContent);
+    }
+    else if (cur_step === 4) {
+      document.getElementById(`step${currentStep}`).classList.remove("active");
+      document.getElementById(`step${currentStep + 1}`).classList.add("active");
+      document.getElementById(`step${currentStep}-content`).classList.add("hidden");
+      // 家族史
+      userData["family_history"] = document.getElementById(`answer${cur_step}`).value;
+
+      const indicatorContent = document.createElement('div');
+      indicatorContent.id = "loading-indicator";
+      indicatorContent.classList.add("loading");
+      indicatorContent.classList.add("hidden");
+      indicatorContent.innerHTML = '哈力馨GPT思考中<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>';
+      document.getElementById('main-content').appendChild(indicatorContent);
+
+      question = replaceTemplatePlaceholders(template["q_update_west_diagnosis_by_family_history"], userData);
+      askLLM(question, "west_diagnosis");
+
+      question = replaceTemplatePlaceholders(template["q_update_chinese_diagnosis_by_family_history"], userData);
+      askLLM(question, "chinese_diagnosis");
+
+      question = replaceTemplatePlaceholders(template["complete_family_history"], userData);
+      askLLM2(question, "family_history_processed");
+
+      currentStep++;
+      const nextContent = document.createElement('div');
+      nextContent.id = `step${currentStep}-content`;
+      nextContent.classList.add('content');
+      nextContent.innerHTML = `
+                       <div id="step_${currentStep}_question" class="question">${template["q_physical_exam"]}</div>
+                       <input type="text" id="answer${currentStep}" class="input-field" placeholder="体格检查模板生成中..." />
+                       <button class="next-button" onclick="nextStep()">下一步</button>
+                   `;
+      document.getElementById('main-content').appendChild(nextContent);
+      document.getElementById("loading-indicator").classList.add("hidden");
+      // Get physical_exam template
+      question = replaceTemplatePlaceholders(template["get_physical_exam_template"], {"preliminary_west_diagnosis":document.getElementById("west_diagnosis").innerText});
+      askLLM3(question, `answer${currentStep}`);
+    }
+    else if (cur_step === 5) {
+      document.getElementById(`step${currentStep}`).classList.remove("active");
+      document.getElementById(`step${currentStep + 1}`).classList.add("active");
+      document.getElementById(`step${currentStep}-content`).classList.add("hidden");
+      // 体格检查
+      userData["physical_exam"] = document.getElementById(`answer${cur_step}`).value;
+
+      document.getElementById("loading-indicator").classList.add("hidden");
+
+      question = replaceTemplatePlaceholders(template["q_update_west_diagnosis_by_physical_exam"], userData);
+      askLLM(question, "west_diagnosis");
+
+      question = replaceTemplatePlaceholders(template["q_update_chinese_diagnosis_by_physical_exam"], userData);
+      askLLM(question, "chinese_diagnosis");
+
+      currentStep++;
+      const nextContent = document.createElement('div');
+      nextContent.id = `step${currentStep}-content`;
+      nextContent.classList.add('content');
+      nextContent.innerHTML = `
+                       <div id="step_${currentStep}_question" class="question">${template["q_specialist_exam"]}</div>
+                       <input type="text" id="answer${currentStep}" class="input-field" placeholder="专科检查模板生成中..."/>
+                       <button class="next-button" onclick="nextStep()">下一步</button>
+                   `;
+      document.getElementById('main-content').appendChild(nextContent);
+      document.getElementById("loading-indicator").classList.add("hidden");
+      // Get specialist exam template
+      question = replaceTemplatePlaceholders(template["get_specialist_exam_template"], {"preliminary_tcm_diagnosis":document.getElementById("chinese_diagnosis").innerText, "preliminary_west_diagnosis":document.getElementById("west_diagnosis").innerText});
+      askLLM3(question, `answer${currentStep}`);
+    }
+    else if (cur_step === 6) {
+      document.getElementById(`step${currentStep}`).classList.remove("active");
+      document.getElementById(`step${currentStep + 1}`).classList.add("active");
+      document.getElementById(`step${currentStep}-content`).classList.add("hidden");
+      // 专科检查
+      userData["specialist_exam"] = document.getElementById(`answer${cur_step}`).value;
+
+      question = replaceTemplatePlaceholders(template["q_update_west_diagnosis_by_specialist_exam"], userData);
+      askLLM(question, "west_diagnosis");
+
+      question = replaceTemplatePlaceholders(template["q_update_chinese_diagnosis_by_specialist_exam"], userData);
+      askLLM(question, "chinese_diagnosis");
+
+      currentStep++;
+      const nextContent = document.createElement('div');
+      nextContent.id = `step${currentStep}-content`;
+      nextContent.classList.add('content');
+      nextContent.innerHTML = `
+                       <div id="step_preliminary_west_diagnosis" class="question">初步西医诊断</div>
+                       <input type="text" id="answer_preliminary_west_diagnosis" class="input-field" />
+                       <div id="step_preliminary_tcm_diagnosis" class="question">初步中医诊断</div>
+                       <input type="text" id="answer_preliminary_tcm_diagnosis" class="input-field" />
+                       <button class="next-button" onclick="nextStep()">治疗方案</button>
+                   `;
+      document.getElementById('main-content').appendChild(nextContent);
+      document.getElementById("answer_preliminary_west_diagnosis").value = document.getElementById("west_diagnosis").innerText;
+      document.getElementById("answer_preliminary_tcm_diagnosis").value = document.getElementById("chinese_diagnosis").innerText;
+
+      document.getElementById("loading-indicator").classList.add("hidden");
+      // Synchronize the text area
+      document.getElementById("west_diagnosis").addEventListener('input', ()=>{
+        document.getElementById("answer_preliminary_west_diagnosis").value = document.getElementById("west_diagnosis").innerText;
+      });
+      document.getElementById("chinese_diagnosis").addEventListener('input', ()=>{
+        document.getElementById("answer_preliminary_tcm_diagnosis").value = document.getElementById("chinese_diagnosis").innerText;
+      });
+
+    }
+    else if (cur_step === 7) {
+      document.getElementById(`step${currentStep}`).classList.remove("active");
+      document.getElementById(`step${currentStep + 1}`).classList.add("active");
+      document.getElementById(`step${currentStep}-content`).classList.add("hidden");
+
+      question = replaceTemplatePlaceholders(template["get_treatment_plan_west"], {"preliminary_west_diagnosis":document.getElementById("west_diagnosis").innerText});
+      askLLM3(question, "answer_west_treatment_plan");
+
+      question = replaceTemplatePlaceholders(template["get_treatment_plan_tcm"], {"preliminary_tcm_diagnosis":document.getElementById("chinese_diagnosis").innerText});
+      askLLM3(question, "answer_chinese_treatment_plan");
+
+      currentStep++;
+      const nextContent = document.createElement('div');
+      nextContent.id = `step${currentStep}-content`;
+      nextContent.classList.add('content');
+      nextContent.innerHTML = `
+                       <div id="step_west_treatment_plan" class="question">西医治疗方案</div>
+                       <input type="text" id="answer_west_treatment_plan" class="input-field" placeholder="西医治疗方案生成中..." />
+                       <div id="step_chinese_treatment_plan" class="question">初步中医诊断</div>
+                       <input type="text" id="answer_chinese_treatment_plan" class="input-field" placeholder="中医治疗方案生成中..." />
+                       <button class="next-button" onclick="nextStep()">下一步</button>
+                   `;
+      document.getElementById('main-content').appendChild(nextContent);
+      document.getElementById("loading-indicator").classList.add("hidden");
+    }
+    else if (cur_step === 8) {
+      document.getElementById(`step${currentStep}`).classList.remove("active");
+      document.getElementById(`step${currentStep + 1}`).classList.add("active");
+      document.getElementById(`step${currentStep}-content`).classList.add("hidden");
+
+      currentStep++;
+      const nextContent = document.createElement('div');
+      nextContent.id = `step${currentStep}-content`;
+      nextContent.classList.add('content');
+      nextContent.innerHTML = `
+                       <div id="step_${currentStep}_question" class="question">${template["q_auxiliary_exam"]}</div>
+                       <input type="text" id="answer${currentStep}" class="input-field" />
+                       <button class="next-button" onclick="nextStep()">下一步</button>
+                   `;
+      document.getElementById('main-content').appendChild(nextContent);
+      document.getElementById("loading-indicator").classList.add("hidden");
+    }
+    else if (cur_step === 9) {
+      document.getElementById(`step${currentStep}`).classList.remove("active");
+      document.getElementById(`step${currentStep + 1}`).classList.add("active");
+      document.getElementById(`step${currentStep}-content`).classList.add("hidden");
+
+      userData["auxiliary_exam"] = document.getElementById(`answer${cur_step}`).value;
+
+      question = replaceTemplatePlaceholders(template["q_update_west_diagnosis_by_auxiliary_exam"], userData);
+      askLLM(question, "west_diagnosis");
+
+      question = replaceTemplatePlaceholders(template["q_update_chinese_diagnosis_by_auxiliary_exam"], userData);
+      askLLM(question, "chinese_diagnosis");
+
+      currentStep++;
+      const nextContent = document.createElement('div');
+      nextContent.id = `step${currentStep}-content`;
+      nextContent.classList.add('content');
+      nextContent.innerHTML = `
+                       <div id="step_${currentStep}_question" class="question">${template["q_other_info"]}</div>
+                       <input type="text" id="answer${currentStep}" class="input-field" />
+                       <button class="next-button" onclick="nextStep()">下一步</button>
+                   `;
+      document.getElementById('main-content').appendChild(nextContent);
+      document.getElementById("loading-indicator").classList.add("hidden");
+    }
+
+  }
+
+  async function askLLM(question, id) {
+    const loadingIndicator = document.getElementById('loading-indicator');
+    loadingIndicator.classList.remove('hidden');
+    fetch("http://127.0.0.1:3096/hlx_llm_service", {
+            method: "POST",
+            body: JSON.stringify({
+                question: question
+            }),
+            headers: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        })
+            .then((response) => response.json())
+            .then((json) => {
+                console.log(`Q: ${question}\n A:${json["answer"]}`); // Debug only
+                document.getElementById(id).innerText = json["answer"];
+            })
+            .catch((error)=> {
+              console.error('Error:', error);
+            })
+            .finally(()=> {
+              if (id !== "west_diagnosis" && id !== "chinese_diagnosis") {
+                loadingIndicator.classList.add('hidden');
+              }
+
+            })
+  }
+
+  async function askLLM2(question, key) {
+    fetch("http://127.0.0.1:3096/hlx_llm_service", {
+            method: "POST",
+            body: JSON.stringify({
+                question: question
+            }),
+            headers: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        })
+            .then((response) => response.json())
+            .then((json) => {
+                console.log(`Q: ${question}\n A:${json["answer"]}`); // Debug only
+                userData[key] = json["answer"];
+            });
+  }
+
+  async function askLLM3(question, id) {
+    fetch("http://127.0.0.1:3096/hlx_llm_service", {
+            method: "POST",
+            body: JSON.stringify({
+                question: question
+            }),
+            headers: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        })
+            .then((response) => response.json())
+            .then((json) => {
+                console.log(`Q: ${question}\n A:${json["answer"]}`); // Debug only
+                document.getElementById(id).value = json["answer"];
+            });
+  }
+
+  function replaceTemplatePlaceholders(t, userData) {
+    let message = t;
+
+    // Replace placeholders using user-provided data
+    for (const key in userData) {
+      const placeholder = `{${key}}`;
+      message = message.replace(placeholder, userData[key]);
+    }
+
+    return message;
+  }
+
+  function generateReport() {
+
+    toggleStylesheet()
+
+    document.getElementById(`step${currentStep}`).classList.remove("active");
+    document.getElementById(`step${currentStep + 1}`).classList.add("active");
+    document.getElementById(`step${currentStep}-content`).classList.add("hidden");
+
+    const nextContent = document.createElement('div');
+    nextContent.id = `step${currentStep}-content`;
+    nextContent.classList.add('content');
+    nextContent.innerHTML = template["medical_record"];
+
+    //Download button
+    const downloadBtn = document.createElement('button');
+    downloadBtn.textContent = "下载病历";
+    downloadBtn.onclick = downloadDocx;
+    nextContent.appendChild(downloadBtn);
+    document.getElementById('main-content').appendChild(nextContent);
+
+    fillFields();
+  }
+
+  function analyzeAndExtract() {
+    // Analyze the user input and extract the info required in medical record
+    userData["other_info"] = document.getElementById("answer10").value;
+    let q = "";
+    q = replaceTemplatePlaceholders(template["analyze_patient_name"], userData)
+    askLLM3(q, "patient_name");
+
+    q = replaceTemplatePlaceholders(template["analyze_department"], userData)
+    askLLM3(q, "department");
+
+    q = replaceTemplatePlaceholders(template["analyze_sex"], userData)
+    askLLM3(q, "sex");
+
+    q = replaceTemplatePlaceholders(template["analyze_address"], userData)
+    askLLM3(q, "address");
+
+    q = replaceTemplatePlaceholders(template["analyze_age"], userData)
+    askLLM3(q, "age");
+
+    q = replaceTemplatePlaceholders(template["analyze_contact"], userData)
+    askLLM3(q, "contact");
+
+    q = replaceTemplatePlaceholders(template["analyze_ethnicity"], userData)
+    askLLM3(q, "ethnicity");
+
+    q = replaceTemplatePlaceholders(template["analyze_admission_date"], userData)
+    askLLM3(q, "admission_date");
+
+    q = replaceTemplatePlaceholders(template["analyze_place_of_origin"], userData)
+    askLLM3(q, "place_of_origin");
+
+    q = replaceTemplatePlaceholders(template["analyze_marital_status"], userData)
+    askLLM3(q, "marital_status");
+
+    q = replaceTemplatePlaceholders(template["analyze_occupation"], userData)
+    askLLM3(q, "occupation");
+
+    q = replaceTemplatePlaceholders(template["analyze_allergies"], userData)
+    askLLM3(q, "allegies");
+
+    q = replaceTemplatePlaceholders(template["analyze_medical_history_summary"], userData)
+    askLLM3(q, "medical_history_summary");
+
+  }
+
+  function fillFields() {
+    // Fill the blanks in the medical report
+    // document.getElementById("patient_name").value = userData["patient_name"];
+    // document.getElementById("department").value = userData["department"];
+    // document.getElementById("sex").value = userData["sex"];
+    // document.getElementById("address").value = userData["address"];
+    // document.getElementById("age").value = userData["age"];
+    // document.getElementById("contact").value = userData["contact"];
+    // document.getElementById("ethnicity").value = userData["ethnicity"];
+    // document.getElementById("admission_date").value = userData["admission_date"];
+    // document.getElementById("place_of_origin").value = userData["place_of_origin"];
+    // document.getElementById("recording_date").value = userData["recording_date"];
+    // document.getElementById("marital_status").value = userData["marital_status"];
+    // //document.getElementById("source_of_history").value = userData["source_of_history"];
+    // document.getElementById("occupation").value = userData["occupation"];
+    // document.getElementById("allergies").value = userData["allergies"];
+
+    document.getElementById("chief_complaint").value = userData["chief_complaint"];
+    document.getElementById("hpi").value = userData["hpi_processed"];
+    document.getElementById("pmh").value = userData["pmh_processed"];
+    document.getElementById("personal_history").value = userData["personal_history_processed"];
+    // let menstrual_history = document.getElementById("menstrual_history").value;
+    // let marital_history = document.getElementById("marital_history").value;
+    document.getElementById("family_history").value = userData["family_history_processed"];
+    // let inspection = document.getElementById("inspection").value;
+    // let auscultation = document.getElementById("auscultation").value;
+    // let interview = document.getElementById("interview").value;
+    // let palpation = document.getElementById("palpation").value;
+
+    document.getElementById("physical_exam").value = userData["physical_exam"];
+    document.getElementById("specialist_exam").value = userData["specialist_exam"];
+    document.getElementById("auxiliary_exam").value = userData["auxiliary_exam"];
+    document.getElementById("medical_history_summary").value = userData["medical_history_summary"];
+
+    document.getElementById("preliminary_tcm_diagnosis").value = document.getElementById("west_diagnosis").innerText;
+    document.getElementById("preliminary_west_diagnosis").value = document.getElementById("chinese_diagnosis").innerText;
+  }
+
+  function toggleStylesheet() {
+    const defaultStyle = document.getElementById('qa-style');
+    const alternateStyle = document.getElementById('medical-record-style');
+
+    if (defaultStyle.disabled) {
+      defaultStyle.disabled = false;
+      alternateStyle.disabled = true;
+    } else {
+      defaultStyle.disabled = true;
+      alternateStyle.disabled = false;
+    }
+  }
+
+  function downloadDocx() {
+    // Get the medical record info
+    let patient_name = document.getElementById("patient_name").value;
+    let department = document.getElementById("department").value;
+    let sex = document.getElementById("sex").value;
+    let address = document.getElementById("address").value;
+    let age = document.getElementById("age").value;
+    let contact = document.getElementById("contact").value;
+    let ethnicity = document.getElementById("ethnicity").value;
+    let admission_date = document.getElementById("admission_date").value;
+    let place_of_origin = document.getElementById("place_of_origin").value;
+    let recording_date = document.getElementById("recording_date").value;
+    let marital_status = document.getElementById("marital_status").value;
+    let source_of_history = document.getElementById("source_of_history").value;
+    let occupation = document.getElementById("occupation").value;
+    let allegies = document.getElementById("allergies").value;
+
+    let chief_complaint = document.getElementById("chief_complaint").value;
+    let hpi = document.getElementById("hpi").value;
+    let pmh = document.getElementById("pmh").value;
+    let personal_history = document.getElementById("personal_history").value;
+    let menstrual_history = document.getElementById("menstrual_history").value;
+    let marital_history = document.getElementById("marital_history").value;
+    let family_history = document.getElementById("family_history").value;
+    let inspection = document.getElementById("inspection").value;
+    let auscultation = document.getElementById("auscultation").value;
+    let interview = document.getElementById("interview").value;
+    let palpation = document.getElementById("palpation").value;
+
+    let physical_exam = document.getElementById("physical_exam").value;
+    let specialist_exam = document.getElementById("specialist_exam").value;
+    let auxiliary_exam = document.getElementById("auxiliary_exam").value;
+    let medical_history_summary = document.getElementById("medical_history_summary").value;
+    let preliminary_tcm_diagnosis = document.getElementById("preliminary_tcm_diagnosis").value;
+    let preliminary_west_diagnosis = document.getElementById("preliminary_west_diagnosis").value;
+
+    let doc = new docx.Document({
+      sections: [],
+    });
+
+    const paragraphs = [
+      new docx.Paragraph({
+        children: [
+          new docx.TextRun({ text: `姓  名: `, bold: true}),
+          new docx.TextRun({ text: `${patient_name}`}),
+          new docx.TextRun({ text: `                        工作单位: `, bold: true}),
+          new docx.TextRun({ text: `${department}`}),
+          new docx.TextRun({ text:  `性  别: `, break: 1, bold:true  }),
+          new docx.TextRun({ text:  `${sex}`}),
+          new docx.TextRun({ text: `                        住    址: `, bold:true }),
+          new docx.TextRun({ text: `${address}` }),
+          new docx.TextRun({ text: `年  龄: `, break: 1, bold:true }),
+          new docx.TextRun({ text: `${age}`}),
+          new docx.TextRun({ text: `                        联系方式: `, bold:true }),
+          new docx.TextRun({ text: `${contact}` }),
+          new docx.TextRun({ text: `民  族: `, break: 1,bold:true }),
+          new docx.TextRun({ text: `${ethnicity}`}),
+          new docx.TextRun({ text: `                        入院日期: `,bold:true }),
+          new docx.TextRun({ text: `${admission_date}`}),
+          new docx.TextRun({ text: `籍  贯: `, break: 1, bold:true }),
+          new docx.TextRun({ text: `${place_of_origin}`}),
+          new docx.TextRun({ text: `                        记录日期: `, bold:true }),
+          new docx.TextRun({ text: `${recording_date}` }),
+          new docx.TextRun({ text: `婚姻状况: `, break: 1, bold:true }),
+          new docx.TextRun({ text: `${marital_status}`}),
+          new docx.TextRun({ text: `                        病史陈述者: ${source_of_history}`,bold:true }),
+          new docx.TextRun({ text: `${source_of_history}` }),
+          new docx.TextRun({ text: `职业: `, break: 1, bold:true }),
+          new docx.TextRun({ text: `${occupation}`}),
+          new docx.TextRun({ text: `                        过敏史: ${allegies}`, bold:true }),
+          new docx.TextRun({ text: `${allegies}` }),
+          new docx.TextRun({ text: `主  诉: `, break: 1, bold:true }),
+          new docx.TextRun({ text: `${chief_complaint}` }),
+          new docx.TextRun({ text: `现病史：: `, break: 1, bold:true }),
+          new docx.TextRun({ text: `${hpi}`}),
+          new docx.TextRun({ text: `既往史: `, break: 1, bold:true }),
+          new docx.TextRun({ text: `${pmh}`}),
+          new docx.TextRun({ text: `个人史: `, break: 1, bold:true }),
+          new docx.TextRun({ text: `${personal_history}` }),
+          new docx.TextRun({ text: `月经史: `, break: 1, bold:true }),
+          new docx.TextRun({ text: `${menstrual_history}`}),
+          new docx.TextRun({ text: `婚姻史: `, break: 1, bold:true }),
+          new docx.TextRun({ text: `${marital_history}`}),
+          new docx.TextRun({ text: `家族史: `, break: 1, bold:true }),
+          new docx.TextRun({ text: `${family_history}`}),
+          new docx.TextRun({ text: `患者（或）家属认可本病历真实性签名: `, break: 1, bold:true }),
+          new docx.TextRun({ text: `四诊合参: `, break: 1, bold:true }),
+          new docx.TextRun({ text: `    望诊: ${inspection}`, break: 1 }),
+          new docx.TextRun({ text: `    闻诊: ${auscultation}`, break: 1 }),
+          new docx.TextRun({ text: `    问诊: ${interview}`, break: 1 }),
+          new docx.TextRun({ text: `    切诊: ${palpation}`, break: 1 }),
+          new docx.TextRun({ text: `                       体格检查`, break: 1, bold:true }),
+          new docx.TextRun({ text: `${physical_exam}`, break: 1 }),
+          new docx.TextRun({ text: `专科检查: `, break: 1, bold:true }),
+          new docx.TextRun({ text: `${specialist_exam}`}),
+          new docx.TextRun({ text: `辅助检查: `, break: 1, bold:true }),
+          new docx.TextRun({ text: `${auxiliary_exam}`}),
+          new docx.TextRun({ text: `                       病史摘要: `, break: 1, bold:true }),
+          new docx.TextRun({ text: `${medical_history_summary}`}),
+          new docx.TextRun({ text: `初步诊断: `, break: 1, bold:true }),
+          new docx.TextRun({ text: `    中医诊断: `, break: 1 }),
+          new docx.TextRun({ text: `${preliminary_tcm_diagnosis}`, break: 1 }),
+          new docx.TextRun({ text: `    西医诊断: `, break: 1 }),
+          new docx.TextRun({ text: `${preliminary_west_diagnosis}`, break: 1 }),
+          new docx.TextRun({ text: `医生签名: `, break: 1,bold:true }),
+          new docx.TextRun({ text: `日期: `, break: 1,bold:true }),
+          new docx.TextRun({ text: `确定诊断: `, break: 1,bold:true }),
+          new docx.TextRun({ text: `    中医诊断: `, break: 1 }),
+          new docx.TextRun({ text: `    西医诊断: `, break: 1 }),
+          new docx.TextRun({ text: `                    医生签名: `, break: 1, bold:true }),
+          new docx.TextRun({ text: `                    日期: `, break: 1, bold:true }),
+        ]
+      })
+    ];
+    paragraphs.forEach(paragraph => doc.addSection({ children: [paragraph] }));
+
+    // Create a mime type that will associate the new file with Microsoft Word
+    const mimeType =
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+    let doc_name = patient_name==="" ? "病人病历" : patient_name;
+    const fileName = doc_name + '.docx';
+    // Create a Blob containing the Document instance and the mimeType
+    docx.Packer.toBlob(doc).then(blob => {
+      const docblob = blob.slice(0, blob.size, mimeType);
+      // Save the file using saveAs from the file-saver package
+      saveAs(docblob, fileName);
+    });
+  }
+</script>
+</body>
+
+</html>
