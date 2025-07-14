@@ -1,0 +1,1 @@
+python deepseek_serving.py --model_path Z:\\weekly\\zzhu\\pretrained\\DeepSeek-R1-Distill-Qwen-1.5B

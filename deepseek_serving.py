@@ -59,7 +59,12 @@ if __name__ == '__main__':
             # pred = model.generate(**inputs, max_new_tokens=20000)
             #
             # text = tokenizer.decode(pred.cpu().detach().numpy()[0])
-            messages = question
+            # messages = f"Human: {question}\n\nAssistant: Let me think about this step by step.\n"
+            messages = [
+                {"role": "system", "content": "You are Qwen, created by Alibaba Cloud. You are a helpful assistant."},
+                {"role": "user", "content": question}
+            ]
+            print(messages)
             text = tokenizer.apply_chat_template(
                 messages,
                 tokenize=False,
