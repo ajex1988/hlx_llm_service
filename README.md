@@ -24,3 +24,20 @@ pip install -r requirements.txt
 After a discussion with Batter, two modifications to be made:
 1. After the specialist exam, there should be a preliminary diagnosis. This is editable, so doctors can modify if it is not accurate
 2. Based on the premilinary diagnosis, there should be a treatment plan. Then after auxiliary exam, there should be final diagnosis appeared in the medical record.
+
+### 2025/08/05
+For VLM, it is better to create a separate environment.
+
+```angular2html
+conda create -n qwen_vlm python=3.9
+```
+
+Install the pytorch
+```angular2html
+pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+```
+
+Install other required libraries
+```angular2html
+pip install -r requirements_qwen_vlm.txt
+```
