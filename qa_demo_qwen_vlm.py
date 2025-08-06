@@ -44,25 +44,30 @@ if __name__ == '__main__':
     app = Flask(__name__)
     CORS(app)
 
-    @app.route('/vlm_chat', methods=['POST'])
+    @app.route('/hlx_vlm_service', methods=['POST'])
     @csp_header({'default-src': "'self'", 'script-src': "'self'"})
     def chat():
         try:
             data = request.get_json()
             input_text = data.get('text', '')
+            print(f"input_text: {input_text}")
             image_base64 = data.get('image', None)
 
             # Build prompt
             query_items = []
+            print(len(image_base64))
+            print(type(image_base64))
             if image_base64:
                 image = decode_base64_image(image_base64)
+                image.save('tmp.png')
                 if image:
-                    query_items.append({'image': image})
+                    query_items.append({'image': './tmp.png'})
             query_items.append({'text': input_text})
             prompt = tokenizer.from_list_format(query_items)
 
             # Run inference
             response, _ = model.chat(tokenizer, query=prompt, history=None)
+            print(f"response: {response}")
 
             return jsonify({'reply': response})
         except Exception as e:
